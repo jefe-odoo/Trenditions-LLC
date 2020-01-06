@@ -137,7 +137,7 @@ class EDISyncAction(models.Model):
     dir_mv_path = fields.Char(string='Move Directory Path', default='/',
                                 help="Directory path on FTP host, used for moving file to after importing files."
                                      "'/' is root path in ftp host and path should always start with same.")
-    # TODO: implment file filter allow using user to read only specific named files.
+    # TODO: implement file filter allow using user to read only specific named files.
     # file_expr = fields.Char(string='Files filter expression', default='*.xml')
     last_sync_date = fields.Datetime(string='Last Synchronized On')
     action_defaults = fields.Text('Default Values', required=True, default='{}',
@@ -160,7 +160,7 @@ class EDISyncAction(models.Model):
     @api.model
     def _do_doc_sync_cron(self, sync_action_id=False, use_new_cursor=False, company_id=False):
         '''
-        Call the doucment code method added by the modules.
+        Call the document code method added by the modules.
         '''
         sync_action_todo = self
         if sync_action_id:
