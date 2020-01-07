@@ -19,7 +19,7 @@ class SyncDocumentType(models.Model):
     will convert those XML to X12 or any desire format.
     '''
     _name = 'sync.document.type'
-    _description = 'EDI Sync Document Type'  
+    _description = 'EDI Sync Document Type'
 
     name = fields.Char('Name', required=True, translate=True, index=True, copy=False)
     active = fields.Boolean(string='Active', default=True)
@@ -94,8 +94,8 @@ class EDIConfig(models.Model):
     def _get_provider_connection(self):
         config = self._get_provider_config()
         from importlib import import_module
-        connector = import_module('odoo.addons.base_edi.models.%s' % ('%s_connection'%self.ftp_portocol))
-        return getattr(connector, '%sConnection'%self.ftp_portocol.upper())(config=config)
+        connector = import_module('odoo.addons.base_edi.models.%s' % ('%s_connection' % self.ftp_portocol))
+        return getattr(connector, '%sConnection' % self.ftp_portocol.upper())(config=config)
 
     def test_provider_connection(self):
         files = []
@@ -125,7 +125,7 @@ class EDISyncAction(models.Model):
     active = fields.Boolean(string='Active', default=True)
     sequence = fields.Integer(string='Sequence',
                                 help='Determine the action processing order', default=10)
-    config_id = fields.Many2one(comodel_name='edi.config', string='EDI Configuration', 
+    config_id = fields.Many2one(comodel_name='edi.config', string='EDI Configuration',
                                 ondelete='restrict', required=True, index=True, copy=False)
     doc_type_id = fields.Many2one(comodel_name='sync.document.type', string='Document Action',
                                 required=True, index=True, copy=False)
@@ -172,7 +172,7 @@ class EDISyncAction(models.Model):
                 _logger.error('Invalid sync_action_id param  passed (hint: pass <list>, <tuple> '
                                             'or recordset of type <EDISyncAction|BaseModel>).')
         else:
-            sync_action_todo = self.search(['|', 
+            sync_action_todo = self.search(['|',
                                     ('last_sync_date', '<', fields.Datetime.now()),
                                     ('last_sync_date', '=', False)
                                 ])
@@ -181,7 +181,7 @@ class EDISyncAction(models.Model):
                 if use_new_cursor:
                     cr = registry(self._cr.dbname).cursor()
                     self = self.with_env(self.env(cr=cr))
-                values= {
+                values = {
                     'company_id': company_id or sync_action.config_id.company_id
                 }
                 doc_action = sync_action.doc_type_id.doc_code
@@ -211,4 +211,3 @@ class EDISyncAction(models.Model):
                     except Exception:
                         pass
         return True
-

@@ -1,11 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-import base64
-import getpass
-import os
 import socket
-import sys
-import traceback
 import paramiko
 
 from io import BytesIO
