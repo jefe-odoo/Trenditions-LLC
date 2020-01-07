@@ -5,6 +5,7 @@ import os
 import pprint
 import logging
 import tempfile
+import xlwt
 
 from odoo import fields, models
 
@@ -33,7 +34,7 @@ class SyncDocumentType(models.Model):
                         default=':'
                                           )
 
-    def _do_export_so(self, conn, sync_action_id, values):
+    def _do_export_po(self, conn, sync_action_id, values):
         '''
         This is dummy demo method.
         @param conn : sftp/ftp connection class.
@@ -47,8 +48,8 @@ class SyncDocumentType(models.Model):
         return True
 
     def make_invoice_line_flatfile_data(self, invoice):
-        join_seg_ele = '%s' % (self.segment_terminator)
-        join_data_ele = '%s' % (self.data_ele_separator)
+        # join_seg_ele = '%s' % (self.segment_terminator)
+        # join_data_ele = '%s' % (self.data_ele_separator)
         invoice_line_element = []
         line_count = 1
         for line in invoice.invoice_line_ids:
@@ -68,23 +69,23 @@ class SyncDocumentType(models.Model):
                 0,  # Line item allowance percentage
                 0,  # Line item allowance dollar amount
             ]
-            line_data = join_data_ele.join([str(el) for el in line_data_elements])
-            line_data = '%s' % (line_data)
-            invoice_line_element.append(line_data)
+            # line_data = join_data_ele.join([str(el) for el in line_data_elements])
+            # line_data = '%s' % (line_data)
+            invoice_line_element.append(line_data_elements)
             line_count = line_count + 1
-        invoice_lines = join_seg_ele.join(invoice_line_element)
-        return invoice_lines
+        # invoice_lines = join_seg_ele.join(invoice_line_element)
+        return invoice_line_element
 
     def make_invoice_x12_flatfile_data(self, invoice):
         order = invoice.invoice_line_ids.mapped('sale_line_ids.order_id')
         order_id = order[0] if order else False
-        join_seg_ele = '%s' % (self.segment_terminator)
-        join_data_ele = '%s' % (self.data_ele_separator)
+        # join_seg_ele = '%s' % (self.segment_terminator)
+        # join_data_ele = '%s' % (self.data_ele_separator)
         header_data_elements = [
             'H', '810',
             invoice.partner_id.id,
             invoice.name,
-            invoice.invoice_date.strftime(EDI_DATE_FORMAT),
+            invoice.invoice_date and invoice.invoice_date.strftime(EDI_DATE_FORMAT) or '',
             order_id.name if order_id else '',
             order_id.date_order.strftime(EDI_DATE_FORMAT) if order_id else '',
             '',  # Bill of Lading
@@ -124,13 +125,13 @@ class SyncDocumentType(models.Model):
             0,  # Allowance Amount2
         ]
 
-        final_row_data = [
-            join_data_ele.join([str(ex) for ex in header_data_elements]),
-        ]
-        invoice_data = join_data_ele.join(final_row_data)
-        invoice_data = '%s' % (invoice_data)
+        # final_row_data = [
+        #     join_data_ele.join([str(ex) for ex in header_data_elements]),
+        # ]
+        # invoice_data = join_data_ele.join(final_row_data)
+        # invoice_data = '%s' % (invoice_data)
         invoice_lines = self.make_invoice_line_flatfile_data(invoice)
-        flat_invoice = join_seg_ele.join([invoice_data, invoice_lines, "\r\n"])
+        flat_invoice = [header_data_elements] + [i for i in invoice_lines]
         return flat_invoice
 
     def _do_export_invoice_flat(self, conn, sync_action_id, values):
@@ -142,24 +143,33 @@ class SyncDocumentType(models.Model):
 
         @return bool : return bool (True|False)
         '''
-        # conn._connect()
-        # conn.cd(sync_action_id.dir_path)
+        conn._connect()
+        conn.cd(sync_action_id.dir_path)
         # get invoices to be sent to edi
-        invoices = self.env['account.move'].search([('state', '=', 'posted'), ('edi_status', 'in', ('pending', 'fail'))], limit=1)
+        invoices = self.env['account.move'].search([('state', '=', 'posted'), ('edi_status', 'in', ('pending', 'fail', 'draft'))])
         if invoices:
             for invoice in invoices:
                 invoice_data = self.make_invoice_x12_flatfile_data(invoice)
-                print(invoice_data)
-            # TODO : used upload method of sftp
-            # tmp_dir = tempfile.mkdtemp()
-            # filename = r'PO' + invoice.name.replace('/', '') + '.txt'
-            # filename = filename.strip()
-            # export_file_path = tmp_dir.rstrip('/') + '/' + filename
-            # print ("*************> ",export_file_path)
-            # with open(export_file_path, 'w+') as file:
-            #     file.write(file_data)
+                print("invoice_data======================", invoice_data)
+                workbook = xlwt.Workbook()
+                sheet = workbook.add_sheet(invoice.name)
 
-            # Update EDI Status to sent
-            # invoice.write({'edi_status': 'sent'})
-
+                # Specifying column
+                if invoice_data:
+                    row = 0
+                    for values in invoice_data:
+                        for v in range(0, len(values)):
+                            sheet.write(row, v, str(values[v]))
+                        row += 1
+                    workbook.save("invoice_info_%s.xls" % invoice.name.replace('/', '_'))
+                    # TODO : used upload method of sftp
+                    tmp_dir = tempfile.mkdtemp()
+                    filename = 'invoice_info_%s.xls' % invoice.name.replace('/', '_')
+                    filename = filename.strip()
+                    export_file_path = tmp_dir.rstrip('/') + '/' + filename
+                    print ("*************> ", export_file_path)
+                    # with open(export_file_path, 'w+') as file:
+                    #     file.write(invoices_data)
+                    # Update EDI Status to sent
+                    invoice.write({'edi_status': 'sent'})
         return True

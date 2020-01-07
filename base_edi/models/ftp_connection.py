@@ -140,7 +140,7 @@ class FTPConnection(object):
         content = outgoing_file['x_content']
         self.upload_file(
             filename,
-            content=StringIO(content_type == 'xml' and content.encode('utf-8', 'replace') or encodestring(content)),
+            content=StringIO(content_type == 'xls' and content.encode('utf-8', 'replace') or encodestring(content)),
             directory=directory
         )
 
