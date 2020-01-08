@@ -6,6 +6,7 @@ import pprint
 import logging
 import tempfile
 import xlwt
+import xlrd
 
 from odoo import fields, models
 
@@ -122,13 +123,17 @@ class SyncDocumentType(models.Model):
                         row += 1
                     workbook.save("purchase_order_%s.xls" % order.name.replace('/', '_'))
                     # TODO : used upload method of sftp
-                    tmp_dir = tempfile.mkdtemp()
                     filename = 'purchase_order_%s.xls' % order.name.replace('/', '_')
                     filename = filename.strip()
-                    export_file_path = tmp_dir.rstrip('/') + '/' + filename
-                    print ("*************> ", export_file_path)
-                    # with open(export_file_path, 'w+') as file:
-                    #     file.write(invoices_data)
-                    # Update EDI Status to sent
-                    order.write({'edi_status': 'sent'})
+                    try:
+                        with open(filename, 'rb') as file:
+                            conn.upload_file(filename, file)
+                            file.close()
+                            conn._conn.quit()
+                        # Update EDI Status to sent
+                        order.write({'edi_status': 'sent'})
+                    except Exception as e:
+                        order.write({'edi_status': 'fail'})
+                        _logger.error("filename>>>>>>>>>>>>>>%s" % e)
+                    os.remove(filename)
         return True

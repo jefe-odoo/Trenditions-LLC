@@ -150,7 +150,6 @@ class SyncDocumentType(models.Model):
         if invoices:
             for invoice in invoices:
                 invoice_data = self.make_invoice_x12_flatfile_data(invoice)
-                print("invoice_data======================", invoice_data)
                 workbook = xlwt.Workbook()
                 sheet = workbook.add_sheet(invoice.name)
 
@@ -163,13 +162,17 @@ class SyncDocumentType(models.Model):
                         row += 1
                     workbook.save("invoice_info_%s.xls" % invoice.name.replace('/', '_'))
                     # TODO : used upload method of sftp
-                    tmp_dir = tempfile.mkdtemp()
                     filename = 'invoice_info_%s.xls' % invoice.name.replace('/', '_')
                     filename = filename.strip()
-                    export_file_path = tmp_dir.rstrip('/') + '/' + filename
-                    print ("*************> ", export_file_path)
-                    # with open(export_file_path, 'w+') as file:
-                    #     file.write(invoices_data)
-                    # Update EDI Status to sent
-                    invoice.write({'edi_status': 'sent'})
+                    try:
+                        with open(filename, 'rb') as file:
+                            conn.upload_file(filename, file)
+                            file.close()
+                            conn._conn.quit()
+                        # Update EDI Status to sent
+                        invoice.write({'edi_status': 'sent'})
+                    except Exception as e:
+                        invoice.write({'edi_status': 'fail'})
+                        _logger.error("filename>>>>>>>>>>>>>>%s" % e)
+                    os.remove(filename)
         return True

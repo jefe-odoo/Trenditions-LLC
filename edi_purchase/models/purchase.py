@@ -12,5 +12,5 @@ class PurchaseOrder(models.Model):
                                     ('pending', 'Pending'),
                                     ('sent', 'Sent'),
                                     ('fail', 'Failed')
-                                ], string='EDI Status', default='draft')
+                                ], string='EDI Status', default='draft', copy=False)
     edi_date = fields.Datetime(string='EDI Document Date')
