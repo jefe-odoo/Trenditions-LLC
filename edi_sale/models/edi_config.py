@@ -20,7 +20,7 @@ class SyncDocumentType(models.Model):
     _inherit = 'sync.document.type'
 
     doc_code = fields.Selection(selection_add=[
-                                ('export_purchase_flat', '850 - Export Purchase (TrueCommerce Flatfile)'),
+                                ('import_so_flat', '850 - Import Order (TrueCommerce Flatfile)'),
                                 ])
 
     def make_order_line_flatfile_data(self, order):
@@ -96,7 +96,7 @@ class SyncDocumentType(models.Model):
             flat_order = [header_data_elements] + [i for i in order_lines]
         return flat_order
 
-    def _do_export_purchase_flat(self, conn, sync_action_id, values):
+    def _do_import_so_flat(self, conn, sync_action_id, values):
         '''
         This is dummy demo method.
         @param conn : sftp/ftp connection class.
@@ -107,8 +107,8 @@ class SyncDocumentType(models.Model):
         '''
         conn._connect()
         conn.cd(sync_action_id.dir_path)
-        # get purchase order to be sent to edi
-        orders = self.env['purchase.order'].search([('state', '=', 'purchase'), ('edi_status', 'in', ('pending', 'fail', 'draft'))])
+        # get sale order to be sent to edi
+        orders = self.env['sale.order'].search([('state', '=', 'purchase'), ('edi_status', 'in', ('pending', 'fail', 'draft'))])
         if orders:
             for order in orders:
                 order_data = self.make_purchase_x12_flatfile_data(order)

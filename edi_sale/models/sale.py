@@ -4,8 +4,8 @@
 from odoo import fields, models
 
 
-class PurchaseOrder(models.Model):
-    _inherit = 'purchase.order'
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
 
     edi_status = fields.Selection(selection=[
                                     ('draft', 'Draft'),
