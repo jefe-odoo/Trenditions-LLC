@@ -7,6 +7,8 @@ import logging
 import tempfile
 import xlwt
 import xlrd
+import csv
+
 
 from odoo import fields, models
 
@@ -23,78 +25,56 @@ class SyncDocumentType(models.Model):
                                 ('import_so_flat', '850 - Import Order (TrueCommerce Flatfile)'),
                                 ])
 
-    def make_order_line_flatfile_data(self, order):
-        # join_seg_ele = '%s' % (self.segment_terminator)
-        # join_data_ele = '%s' % (self.data_ele_separator)
-        order_line_element = []
-        line_count = 1
-        for line in order.order_line:
-            line_data_elements = [
-                "I",
-                line_count,  # Row ID
-                line.id,  # Line
-                line.product_id.default_code or '',  # Vendor Part
-                line.product_id.default_code or '',  # Buyer Part
-                '',  # UPC
-                line.name,  # Description
-                line.product_qty,  # Quantity
-                line.product_uom.name or '',  # UOM
-                line.price_unit,  # Unit Price
-                '',  # Pack Size
-                '',  # # of Inner Packs
-                '',  # Item Allowance Percent1
-                '',  # Item Allowance Amount1
-            ]
-            # line_data = join_data_ele.join([str(el) for el in line_data_elements])
-            # line_data = '%s' % (line_data)
-            order_line_element.append(line_data_elements)
-            line_count = line_count + 1
-        # invoice_lines = join_seg_ele.join(invoice_line_element)
-        return order_line_element
+    def prepared_order_line_from_flatfile(self, order, rows):
+        order_line_data = []
+        for row in rows:
+            line_data = {
+                'order_id': order.id,
+                # Row ID
+                # Line #
+                # Vendor Part #
+                # Buyer Part #
+                # UPC #
+                # Description
+                # Quantity
+                # UOM
+                # Unit Price
+                # Pack Size
+                # # of Inner Packs
+                # Item Allowance Percent1
+                # Item Allowance Amount1
+            }
+            order_line_data.append(line_data)
+        return order_line_data
 
-    def make_purchase_x12_flatfile_data(self, order):
-        flat_order = []
-        invoice = order and order.invoice_ids and order.invoice_ids[0] or False
-        if order:
-            header_data_elements = [
-                'H', '850',
-                order.id,  # Transaction ID
-                order.id,  # Accounting ID
-                order.name,  # Purchase Order Number
-                order.date_approve.strftime(EDI_DATE_FORMAT) or '',  # PO Date
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.name or '',  # Ship To Name
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.street or '',  # Ship To Address - Line One
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.street2 or '',  # Ship To Address - Line Two
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.city or '',  # Ship To City
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.state_id.name or '',  # Ship To State
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.zip or '',  # Ship To Zip code
-                invoice and invoice.partner_shipping_id and invoice.partner_shipping_id.country_id.name or '',  # Ship To Country
-                '',  # Store #
-                '',  # The Ship To Code - The Store# where the product is shipping to
-                order.partner_id.name or '',  # Bill To Name
-                order.partner_id.street or '',  # Bill To Address - Line One
-                order.partner_id.street2 or '',  # Bill To Address - Line Two
-                order.partner_id.city or '',  # Bill To City
-                order.partner_id.state_id.name or '',  # Bill To State
-                order.partner_id.zip or '',  # Bill To Zip code
-                order.partner_id.country_id.name or '',  # Bill To Country
-                '',  # Bill To Code
-                '',  # Ship Via
-                order.date_approve.strftime(EDI_DATE_FORMAT),  # Ship Date
-                '',  # Terms
-                '',  # Note
-                '',  # Department Number
-                '',  # Cancel Date
-                '',  # Do Not Ship Before
-                '',  # Do Not Ship After
-                '',  # Allowance Percent1
-                '',  # Allowance Amount1
-                '',  # Allowance Percent2
-                '',  # Allowance Amount2
-            ]
-            order_lines = self.make_order_line_flatfile_data(order)
-            flat_order = [header_data_elements] + [i for i in order_lines]
-        return flat_order
+    def prepared_order_from_flatfile(self, row):
+        if row and row[0] == 'H' and row[1] == '480':
+            partner = self.env['res_partner'].search(['ref', '=', row[3]], limit=1)
+            order_datra = {
+                # Transaction ID
+                'partner_id': partner and partner.id,  # Accounting ID
+                'client_order_ref': row[4],  # Purchase Order Number
+                'date_order': row[5],  # PO Date
+                'x_studio_full_delivery_address': ','.join(row[5:11]),
+                # Ship To Name # Ship To Address - Line One # Ship To Address - Line Two # Ship To City # Ship To State # Ship To Zip code # Ship To Country
+                # Store #
+                'x_studio_full_invoice_address': ','.join(row[13:20]),
+                # Bill To Name, Bill To Address - Line One, Bill To Address - Line Two, Bill To City, Bill To State, Bill To Zip code, Bill To Country, Bill To Code
+                'x_studio_ship_by': row[21],  # Ship Via
+                'commitment_date': row[22],  # Ship Date
+                # Terms
+                'x_studio_order_note': row[24],  # Note
+                # Department Number
+                'x_studio_cancel_date': row[26],  # Cancel Date
+                # Do Not Ship Before
+                # Do Not Ship After
+                # Allowance Percent1
+                # Allowance Amount1
+                # Allowance Percent2
+                # Allowance Amount2
+            }
+            order = self.env['sale.order'].create({order_datra})
+        return order
 
     def _do_import_so_flat(self, conn, sync_action_id, values):
         '''
@@ -107,33 +87,23 @@ class SyncDocumentType(models.Model):
         '''
         conn._connect()
         conn.cd(sync_action_id.dir_path)
-        # get sale order to be sent to edi
-        orders = self.env['sale.order'].search([('state', '=', 'purchase'), ('edi_status', 'in', ('pending', 'fail', 'draft'))])
-        if orders:
-            for order in orders:
-                order_data = self.make_purchase_x12_flatfile_data(order)
-                workbook = xlwt.Workbook()
-                sheet = workbook.add_sheet(order.name)
-                # Specifying column
-                if order_data:
-                    row = 0
-                    for values in order_data:
-                        for v in range(0, len(values)):
-                            sheet.write(row, v, str(values[v]))
-                        row += 1
-                    workbook.save("purchase_order_%s.xls" % order.name.replace('/', '_'))
-                    # TODO : used upload method of sftp
-                    filename = 'purchase_order_%s.xls' % order.name.replace('/', '_')
-                    filename = filename.strip()
-                    try:
-                        with open(filename, 'rb') as file:
-                            conn.upload_file(filename, file)
-                            file.close()
-                            conn._conn.quit()
-                        # Update EDI Status to sent
-                        order.write({'edi_status': 'sent'})
-                    except Exception as e:
-                        order.write({'edi_status': 'fail'})
-                        _logger.error("filename>>>>>>>>>>>>>>%s" % e)
-                    os.remove(filename)
+        files = conn.ls()
+        order = self.env['sale.order']
+        order_line = self.env['sale.order.line']
+        for file in files:
+            file_path = os.path.join(sync_action_id.dir_path, file)
+            file_data = conn.download_incoming_file(file_path).encode('utf-8')
+            csv_reader = csv.reader(file_data, delimiter=',')
+            line_count = 0
+            rows = []
+            for row in csv_reader:
+                if line_count == 0:
+                    print(row)
+                    order = self.prepared_order_from_flatfile(row)
+                    print ('order---------------------', order)
+                    line_count += 1
+                else:
+                    rows.append(row)
+            order_line = order_line.create(self.prepared_order_line_from_flatfile(order, rows))
+            print ('order_line---------------------', order_line)
         return True
