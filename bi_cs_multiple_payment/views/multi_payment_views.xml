@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+    
+        <act_window id="cs_multi_payment_view"
+            name="Multiple Invoice Payment"
+            res_model="customer.multi.payments"
+            binding_model="account.move"
+            binding_type="action"
+            view_mode="form" target="new" />
+    
+    </data>
+</odoo>
