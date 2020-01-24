@@ -5,13 +5,15 @@ import os
 import pprint
 import logging
 import csv
+from datetime import datetime
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 
 from odoo import fields, models
 
 _logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4)
-EDI_DATE_FORMAT = '%m/%d/%Y'
+EDI_DATE_FORMAT = '%d/%m/%Y'
 
 
 class SyncDocumentType(models.Model):
@@ -24,68 +26,77 @@ class SyncDocumentType(models.Model):
 
     def prepared_order_line_from_flatfile(self, order, rows):
         order_line_data = []
+        product_product = self.env['product.product']
         for row in rows:
-            product = self.env['product.product'].search(['|', ('barcode', 'ilike', row[2]), ('default_code', 'ilike', row[3])], limit=1)
+            product = product_product.search(['|', ('barcode', 'in', [row[2], row[4]]), ('default_code', '=', row[3])], limit=1)
             uom = self.env['uom.uom'].search([('name', 'ilike', row[7])], limit=1)
-            if product:
-                line_data = {
-                    'order_id': order.id,
-                    # Row ID 10
-                    # Line # 73111043938: barcode
-                    'product_id': product and product.id,
-                    # Vendor Part # 1353024 ??
-                    # Buyer Part # 73111043938 :default_code
-                    # UPC #
-                    # Description: Hooey Rodeo Tooled Leather Wallet, Saddle Brown Tooling & Embossed Dark Green Lo
-                    'name': row[5],
-                    # Quantity 1
-                    'product_uom_qty': row[6],
-                    # UOM Each
-                    'product_uom': uom and uom.id,
-                    # Unit Price 26
-                    'price_unit': row[8]
-                    # Pack Size
-                    # # of Inner Packs
-                    # Item Allowance Percent1
-                    # Item Allowance Amount1
-                }
-                order_line_data.append(line_data)
-            else:
-                print ('product not found---------------------', row[2])
+            if not product:
+                product = product_product.create({'name': row[5], 'barcode': row[2], 'default_code': row[3], 'uom_id': uom and uom.id})
+            line_data = {
+                'order_id': order.id,
+                'product_id': product.id,
+                'name': str(row[5]),
+                'product_uom_qty': float(row[6]),
+                'product_uom': uom and uom.id,
+                'price_unit': float(row[8]),
+                'display_type': False,
+            }
+            # Pack Size
+            # # of Inner Packs
+            # Item Allowance Percent1
+            # Item Allowance Amount1
+            order_line_data.append(line_data)
         return order_line_data
 
-    def prepared_order_from_flatfile(self, row):
-        order = self.env['sale.order']
-        if row and row[0] == 'H' and row[1] == '480':
-            partner = self.env['res_partner'].search(['ref', '=', row[3]], limit=1)
-            if partner:
-                order_datra = {
-                    # Transaction ID
-                    'partner_id': partner and partner.id,  # Accounting ID
-                    'client_order_ref': row[4],  # Purchase Order Number
-                    'date_order': row[5],  # PO Date
-                    'x_studio_full_delivery_address': ','.join(row[5:11]),
-                    # Ship To Name # Ship To Address - Line One # Ship To Address - Line Two # Ship To City # Ship To State # Ship To Zip code # Ship To Country
-                    # Store #
-                    'x_studio_full_invoice_address': ','.join(row[13:20]),
-                    # Bill To Name, Bill To Address - Line One, Bill To Address - Line Two, Bill To City, Bill To State, Bill To Zip code, Bill To Country, Bill To Code
-                    'x_studio_ship_by': row[21],  # Ship Via
-                    'commitment_date': row[22],  # Ship Dates
-                    # Terms
-                    'x_studio_order_note': row[24],  # Note
-                    # Department Number
-                    'x_studio_cancel_date': row[26],  # Cancel Date
-                    # Do Not Ship Before
-                    # Do Not Ship After
-                    # Allowance Percent1
-                    # Allowance Amount1
-                    # Allowance Percent2
-                    # Allowance Amount2
+    def create_partner(self, name=False, address=[], type='contact', company_type='person', parent_id=False):
+        res_partner = self.env['res.partner']
+        res_partner = res_partner.search(['|', ('name', 'ilike', name), ('name', '=', name)], limit=1)
+        if name and not res_partner:
+            data = {
+                    'name': name,
+                    'type': type,
+                    'company_type': company_type,
+                    'parent_id': parent_id,
                 }
-                order = order.create({order_datra})
-            else:
-                print ('Partner not found---------------------', row[3])
-        return order
+            if address:
+                state = self.env['res.country.state'].search([('code', '=', address[3])], limit=1)
+                country = self.env['res.country'].search([('code', '=', address[5])], limit=1)
+                data.update({
+                    'street': address[0],
+                    'street2': address[1],
+                    'city': address[2],
+                    'state_id': state and state.id,
+                    'zip': address[4],
+                    'country_id': country and country.id,
+                    })
+            res_partner = res_partner.create(data)
+        return res_partner and res_partner.id
+
+    def prepared_order_from_flatfile(self, row):
+        partner_id = self.create_partner(row[2], [], company_type='company')
+        partner_shipping_id = self.create_partner(row[5], row[6:12], 'delivery', parent_id=partner_id)
+        partner_invoice_id = self.create_partner(row[13], row[14:20], 'invoice', parent_id=partner_id)
+        payment_term = self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
+        order_data = {
+            'partner_id': partner_id,
+            'client_order_ref': row[3] or False,
+            'date_order': row[4] and datetime.strptime(row[4], '%d/%m/%Y').strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
+            'partner_shipping_id': partner_shipping_id,
+            'partner_invoice_id': partner_invoice_id,
+            'x_studio_ship_by': row[21] or False,
+            'commitment_date': row[22] and datetime.strptime(row[22], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT) or False,  # Ship Dates
+            'payment_term_id': payment_term and payment_term.id,
+            'x_studio_order_notes': row[24] or False,
+            'note': row[24] or False,
+            'x_studio_cancel_date': row[26] and datetime.strptime(row[26], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT) or False,  # Cancel Date
+        }
+        # Do Not Ship Before
+        # Do Not Ship After
+        # Allowance Percent1
+        # Allowance Amount1
+        # Allowance Percent2
+        # Allowance Amount2
+        return order_data
 
     def _do_import_so_flat(self, conn, sync_action_id, values):
         '''
@@ -104,31 +115,28 @@ class SyncDocumentType(models.Model):
         for file in files:
             file_path = os.path.join(sync_action_id.dir_path, file)
             file_data = conn.download_incoming_file(file_path).encode('utf-8')
-        # with open('/home/prashant/Desktop/PurchaseOrder_20191209101823518.csv', '+r') as file_data:
             csv_reader = csv.reader(file_data, delimiter=',')
             line_count = 0
             rows = []
             for row in csv_reader:
-                print ('rowww---------------------', row)
                 if line_count == 0:
-                    print(row)
                     try:
-                        order = self.prepared_order_from_flatfile(row)
+                        order = order.create(self.prepared_order_from_flatfile(row))
                         line_count = 1
-                    except Exception as e:
-                        _logger(e)
-                        raise Warning(e)
+                    except Exception:
+                        _logger.error('Order has required fields not set')
+                        raise
                 else:
                     rows.append(row)
             if order:
                 try:
-                    order_line = order_line.create(self.prepared_order_line_from_flatfile(order, rows))
-                    print ('order---------------------', order)
-                    print ('rows---------------------', rows)
-                    print ('order_line---------------------', order_line)
-                except Exception as e:
-                    _logger(e)
-                    raise Warning(e)
-            else:
-                print ('order not found---------------------', order)
+                    order_line_data = self.prepared_order_line_from_flatfile(order, rows)
+                    order_line = order_line.create(order_line_data)
+                    # git the errro after create the order
+                    # odoo.exceptions.CacheMiss:
+                    self.flush()
+                except Exception:
+                    _logger.error('Order Line has required fields not set')
+                    raise
+            conn._disconnect()
         return True
