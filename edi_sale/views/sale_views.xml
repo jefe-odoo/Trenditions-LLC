@@ -12,6 +12,9 @@
                         <field name="edi_date"/>
                     </group>
                 </xpath>
+                <field name="payment_term_id" position="after">
+                    <field name="tra_store"/>
+                </field>
             </data>
         </field>
     </record>

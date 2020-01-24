@@ -14,3 +14,4 @@ class SaleOrder(models.Model):
                                     ('fail', 'Failed')
                                 ], string='EDI Status', default='draft', copy=False)
     edi_date = fields.Datetime(string='EDI Document Date')
+    tra_store = fields.Char('Related Store #')

@@ -83,6 +83,7 @@ class SyncDocumentType(models.Model):
             'date_order': row[4] and datetime.strptime(row[4], '%d/%m/%Y').strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
             'partner_shipping_id': partner_shipping_id,
             'partner_invoice_id': partner_invoice_id,
+            'tra_store': row[12],
             'x_studio_ship_by': row[21] or False,
             'commitment_date': row[22] and datetime.strptime(row[22], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT) or False,  # Ship Dates
             'payment_term_id': payment_term and payment_term.id,
