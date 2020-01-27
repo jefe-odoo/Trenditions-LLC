@@ -147,10 +147,11 @@ class EDISyncAction(models.Model):
 
     @api.constrains('action_defaults')
     def _check_action_defaults(self):
-        try:
-            dict(safe_eval(self.action_defaults))
-        except Exception:
-            raise ValidationError(_('Invalid expression, it must be a literal python\
+        for rec in self:
+            try:
+                dict(safe_eval(rec.action_defaults))
+            except Exception:
+                raise ValidationError(_('Invalid expression, it must be a literal python\
                                      dictionary definition e.g. "{\'field\': \'value\'}"'))
 
     def do_doc_sync_user(self, use_new_cursor=False, company_id=False):
