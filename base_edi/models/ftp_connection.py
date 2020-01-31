@@ -2,7 +2,7 @@
 
 import ftplib
 
-from io import StringIO
+from io import StringIO, BytesIO
 from base64 import encodestring
 
 
@@ -105,7 +105,7 @@ class FTPConnection(object):
         Downloads data for the specified file
         @return str the contents of the file
         """
-        data = StringIO()
+        data = BytesIO()
         self._conn.retrbinary('RETR %s' % filename, data.write)
         contents = data.getvalue()
         data.close()
