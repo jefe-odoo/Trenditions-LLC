@@ -166,13 +166,13 @@ class SyncDocumentType(models.Model):
                     filename = filename.strip()
                     try:
                         with open(filename, 'rb') as file:
-                            conn.upload_file(filename, file)
+                            conn.upload_file(filename, file, sync_action_id.dir_path)
                             file.close()
-                            conn._conn.quit()
                         # Update EDI Status to sent
                         invoice.write({'edi_status': 'sent'})
                     except Exception as e:
                         invoice.write({'edi_status': 'fail'})
                         _logger.error("filename>>>>>>>>>>>>>>%s" % e)
                     os.remove(filename)
+        conn._disconnect()
         return True

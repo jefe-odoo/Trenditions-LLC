@@ -82,6 +82,7 @@ class FTPConnection(object):
         Create a file with filename and contents in the current or specified directory
         @param buffer contents: Buffer object like StringIO containing contents
         """
+        print ('directory---------------------', directory)
         self._conn.storbinary('STOR %s%s' % (directory and directory + '/' or '', filename), contents)
 
     def rename(self, old_name, new_name, add_postfix_if_exists=True):

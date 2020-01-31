@@ -9,11 +9,11 @@ from datetime import datetime
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 
-from odoo import fields, models
+from odoo import fields, models, _
 
 _logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4)
-EDI_DATE_FORMAT = '%d/%m/%Y'
+EDI_DATE_FORMAT = '%m/%d/%Y'
 
 
 class SyncDocumentType(models.Model):
@@ -80,7 +80,7 @@ class SyncDocumentType(models.Model):
         order_data = {
             'partner_id': partner_id,
             'client_order_ref': row[3] or False,
-            'date_order': row[4] and datetime.strptime(row[4], '%d/%m/%Y').strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
+            'date_order': row[4] and datetime.strptime(row[4], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
             'partner_shipping_id': partner_shipping_id,
             'partner_invoice_id': partner_invoice_id,
             'tra_store': row[12],
@@ -111,33 +111,38 @@ class SyncDocumentType(models.Model):
         conn._connect()
         conn.cd(sync_action_id.dir_path)
         files = conn.ls()
-        order = self.env['sale.order']
-        order_line = self.env['sale.order.line']
+        order = self.env['sale.order'].sudo()
+        order_line = self.env['sale.order.line'].sudo()
         for file in files:
             file_path = os.path.join(sync_action_id.dir_path, file)
-            file_data = conn.download_incoming_file(file_path).encode('utf-8')
-            csv_reader = csv.reader(file_data, delimiter=',')
-            line_count = 0
-            rows = []
-            for row in csv_reader:
-                if line_count == 0:
+            temp_file = 'temp.csv'
+            data = open(temp_file, 'wb')
+            conn._conn.retrbinary('RETR %s' % file_path, data.write)
+            data.close()
+            with open(temp_file, 'rt') as file_data:
+                csv_reader = csv.reader(file_data, delimiter=',')
+                line_count = 0
+                rows = []
+                for row in csv_reader:
+                    if line_count == 0:
+                        try:
+                            order = order.create(self.prepared_order_from_flatfile(row))
+                            line_count = 1
+                        except Exception:
+                            _logger.error('Order has required fields not set - FILE: %s ' % file)
+                    else:
+                        rows.append(row)
+                if order:
                     try:
-                        order = order.create(self.prepared_order_from_flatfile(row))
-                        line_count = 1
+                        order_line_data = self.prepared_order_line_from_flatfile(order, rows)
+                        order_line = order_line.create(order_line_data)
+                        # git the errro after create the order
+                        # odoo.exceptions.CacheMiss:
+                        self.flush()
                     except Exception:
-                        _logger.error('Order has required fields not set')
-                        raise
-                else:
-                    rows.append(row)
-            if order:
-                try:
-                    order_line_data = self.prepared_order_line_from_flatfile(order, rows)
-                    order_line = order_line.create(order_line_data)
-                    # git the errro after create the order
-                    # odoo.exceptions.CacheMiss:
-                    self.flush()
-                except Exception:
-                    _logger.error('Order Line has required fields not set')
-                    raise
-            conn._disconnect()
+                        _logger.error('Order Line has required fields not set - FILE: %s ' % file)
+                file_data.close()
+                if order:
+                    order.sudo().message_post(body=_('Sale Order Created from the EDI File of: %s' % file))
+        conn._disconnect()
         return True
