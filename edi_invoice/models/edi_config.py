@@ -146,7 +146,7 @@ class SyncDocumentType(models.Model):
         conn._connect()
         conn.cd(sync_action_id.dir_path)
         # get invoices to be sent to edi
-        invoices = self.env['account.move'].search([('state', '=', 'posted'), ('edi_status', 'in', ('pending', 'fail', 'draft'))])
+        invoices = self.env['account.move'].search([('state', '=', 'posted'), ('type', '=', 'out_invoice'), ('edi_status', 'in', ('pending', 'fail', 'draft'))], limit=20)
         if invoices:
             for invoice in invoices:
                 invoice_data = self.make_invoice_x12_flatfile_data(invoice)
@@ -166,13 +166,14 @@ class SyncDocumentType(models.Model):
                     filename = filename.strip()
                     try:
                         with open(filename, 'rb') as file:
-                            conn.upload_file(filename, file, sync_action_id.dir_path)
+                            conn.upload_file(filename, file)
                             file.close()
                         # Update EDI Status to sent
                         invoice.write({'edi_status': 'sent'})
                     except Exception as e:
                         invoice.write({'edi_status': 'fail'})
-                        _logger.error("filename>>>>>>>>>>>>>>%s" % e)
+                        _logger.error("file not uploaded %s" % e)
                     os.remove(filename)
+                self.flush()
         conn._disconnect()
         return True

@@ -114,6 +114,8 @@ class SyncDocumentType(models.Model):
         order = self.env['sale.order'].sudo()
         order_line = self.env['sale.order.line'].sudo()
         for file in files:
+            if not file.endswith('.csv'):
+                continue
             file_path = os.path.join(sync_action_id.dir_path, file)
             temp_file = 'temp.csv'
             data = open(temp_file, 'wb')
