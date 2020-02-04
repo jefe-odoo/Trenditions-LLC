@@ -16,7 +16,7 @@ You can your own edi xml expoert and import via ftp.
         'security/base_edi_security.xml',
         'security/ir.model.access.csv',
         'views/edi_config_view.xml',
-        #'views/res_partner_view.xml',
+        'data/ir_cron_data.xml',
     ],
     'demo': [],
     'installable': True,
