@@ -7,7 +7,7 @@ import logging
 import tempfile
 import xlwt
 
-from odoo import fields, models
+from odoo import fields, models, _
 
 _logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4)
@@ -169,7 +169,9 @@ class SyncDocumentType(models.Model):
                             conn.upload_file(filename, file)
                             file.close()
                         # Update EDI Status to sent
-                        invoice.write({'edi_status': 'sent'})
+                        invoice.write({'edi_status': 'sent', 'edi_date': fields.Datetime.now()})
+                        invoice.sudo().message_post(body=_('Invoice file created on the EDI server %s' % filename))
+                        _logger.info('Invoice file created on the server path of %s/%s' % (sync_action_id.dir_path, filename))
                     except Exception as e:
                         invoice.write({'edi_status': 'fail'})
                         _logger.error("file not uploaded %s" % e)
