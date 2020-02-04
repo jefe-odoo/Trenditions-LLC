@@ -8,3 +8,4 @@ class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     tra_store = fields.Char('Related Store #')
+    is_edi_order = fields.Boolean("EDI Order")

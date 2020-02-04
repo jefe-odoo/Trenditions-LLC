@@ -13,6 +13,7 @@ EDI Purchase Import/Export (850)
     'data': [
         'data/edi_sale_data.xml',
         'views/sale_views.xml',
+        'data/edi_so_sequence_data.xml',
     ],
     'demo': [],
     'installable': True,

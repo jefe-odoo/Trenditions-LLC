@@ -78,6 +78,7 @@ class SyncDocumentType(models.Model):
         partner_invoice_id = self.create_partner(row[13], row[14:20], 'invoice', parent_id=partner_id)
         payment_term = self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
         order_data = {
+            'name': self.env['ir.sequence'].next_by_code('edi.sale.order'),
             'partner_id': partner_id,
             'client_order_ref': row[3] or False,
             'date_order': row[4] and datetime.strptime(row[4], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
@@ -90,6 +91,7 @@ class SyncDocumentType(models.Model):
             'x_studio_order_notes': row[24] or False,
             'note': row[24] or False,
             'x_studio_cancel_date': row[26] and datetime.strptime(row[26], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT) or False,  # Cancel Date
+            'is_edi_order': True,
         }
         # Do Not Ship Before
         # Do Not Ship After
