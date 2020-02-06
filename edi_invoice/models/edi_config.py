@@ -4,10 +4,9 @@
 import os
 import pprint
 import logging
-import tempfile
 import xlwt
 
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 
 _logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4)
@@ -143,10 +142,26 @@ class SyncDocumentType(models.Model):
 
         @return bool : return bool (True|False)
         '''
+        if 'active' in values and not values.get('active'):
+            return False
+        # get invoices to be sent to edi
+
+        invoices = self.env['account.move'].search([('state', '=', 'posted'), ('type', '=', 'out_invoice'), ('edi_status', 'in', ('pending', 'fail', 'draft'))], limit=20)
+        return self.export_invoice_flat(conn, sync_action_id, values, invoices)
+
+    @api.model
+    def export_invoice_flat(self, conn, sync_action_id, values, invoices):
+        '''
+        This is dummy demo method.
+        @param conn : sftp/ftp connection class.
+        @param sync_action_id: recorset of type `edi.sync.action`
+        @param values:dict of values that may be useful to various methods
+
+        @return bool : return bool (True|False)
+        '''
         conn._connect()
         conn.cd(sync_action_id.dir_path)
         # get invoices to be sent to edi
-        invoices = self.env['account.move'].search([('state', '=', 'posted'), ('type', '=', 'out_invoice'), ('edi_status', 'in', ('pending', 'fail', 'draft'))], limit=20)
         if invoices:
             for invoice in invoices:
                 invoice_data = self.make_invoice_x12_flatfile_data(invoice)

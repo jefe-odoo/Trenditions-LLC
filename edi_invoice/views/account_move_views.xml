@@ -15,4 +15,14 @@
             </data>
         </field>
     </record>
+    <record model="ir.actions.server" id="action_export_account_invoice_to_edi">
+        <field name="name">export invoices to Edi</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    records.export_invoice_to_edi()
+        </field>
+    </record>
 </odoo>

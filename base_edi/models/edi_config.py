@@ -185,6 +185,7 @@ class EDISyncAction(models.Model):
                 values = {
                     'company_id': company_id or sync_action.config_id.company_id
                 }
+                values.update(dict(safe_eval(sync_action.action_defaults)))
                 doc_action = sync_action.doc_type_id.doc_code
                 sync_method = '_do_%s' % doc_action
                 conn = sync_action.config_id._get_provider_connection()
