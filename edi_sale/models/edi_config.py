@@ -48,9 +48,13 @@ class SyncDocumentType(models.Model):
             order_line_data.append(line_data)
         return order_line_data
 
-    def create_partner(self, name=False, address=[], type='contact', company_type='person', parent_id=False):
+    def create_partner(self, name=False, ref=False, address=[], type='contact', company_type='person', parent_id=False):
         res_partner = self.env['res.partner']
-        res_partner = res_partner.search(['|', ('name', 'ilike', name), ('name', '=', name)], limit=1)
+        if ref:
+            partner = res_partner.search(['|', ('ref', 'ilike', ref), ('ref', '=', ref)], limit=1)
+            res_partner = partner and partner.parent_id or partner
+        elif name:
+            res_partner = res_partner.search(['|', ('name', 'ilike', name), ('name', '=', name)], limit=1)
         if name and not res_partner:
             data = {
                     'name': name,
@@ -73,9 +77,9 @@ class SyncDocumentType(models.Model):
         return res_partner and res_partner.id
 
     def prepared_order_from_flatfile(self, row):
-        partner_id = self.create_partner(row[2], [], company_type='company')
-        partner_shipping_id = self.create_partner(row[5], row[6:12], 'delivery', parent_id=partner_id)
-        partner_invoice_id = self.create_partner(row[13], row[14:20], 'invoice', parent_id=partner_id)
+        partner_id = self.create_partner(ref=row[2], company_type='company')
+        partner_shipping_id = self.create_partner(name=row[5], address=row[6:12], type='delivery')
+        partner_invoice_id = self.create_partner(name=row[13], address=row[14:20], type='invoice')
         payment_term = self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
         order_data = {
             'name': self.env['ir.sequence'].next_by_code('edi.sale.order'),
@@ -130,7 +134,12 @@ class SyncDocumentType(models.Model):
                 for row in csv_reader:
                     if line_count == 0:
                         try:
+                            sale_order = order.search([('client_order_ref', '=', row[3]), ('tra_store', '=', row[12]), ('client_order_ref', '!=', False), ('tra_store', '!=', False)])
+                            if sale_order:
+                                _logger.warning('order already created from the file of %s and customer po: %s and store number: %s' % (file, row[3], row[12]))
+                                break
                             order = order.create(self.prepared_order_from_flatfile(row))
+                            _logger.info('Order Created: %s' % order.name)
                             line_count = 1
                         except Exception:
                             _logger.error('Order has required fields not set - FILE: %s ' % file)
