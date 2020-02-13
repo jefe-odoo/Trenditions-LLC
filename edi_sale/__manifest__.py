@@ -12,6 +12,7 @@ EDI Purchase Import/Export (850)
     'depends': ['base_edi', 'sale_management'],
     'data': [
         'data/edi_sale_data.xml',
+        'views/partner_views.xml',
         'views/sale_views.xml',
         'data/edi_so_sequence_data.xml',
     ],

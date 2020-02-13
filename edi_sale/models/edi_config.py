@@ -51,8 +51,7 @@ class SyncDocumentType(models.Model):
     def create_partner(self, name=False, ref=False, address=[], type='contact', company_type='person', parent_id=False):
         res_partner = self.env['res.partner']
         if ref:
-            partner = res_partner.search(['|', ('ref', 'ilike', ref), ('ref', '=', ref)], limit=1)
-            res_partner = partner and partner.parent_id or partner
+            res_partner = res_partner.search(['|', ('ref', 'ilike', ref), ('ref', '=', ref)], limit=1)
         elif name:
             res_partner = res_partner.search(['|', ('name', 'ilike', name), ('name', '=', name)], limit=1)
         if name and not res_partner:
@@ -74,20 +73,42 @@ class SyncDocumentType(models.Model):
                     'country_id': country and country.id,
                     })
             res_partner = res_partner.create(data)
-        return res_partner and res_partner.id
+        return res_partner
 
     def prepared_order_from_flatfile(self, row):
-        partner_id = self.create_partner(ref=row[2], company_type='company')
-        partner_shipping_id = self.create_partner(name=row[5], address=row[6:12], type='delivery')
-        partner_invoice_id = self.create_partner(name=row[13], address=row[14:20], type='invoice')
+        # CAV090 is example where it is not dropship
+        # CAV090 - customer reference.
+        # CAV090 is ref field set on contact Cavenders Boot City #090
+        # Parent is Cavenders
+        # SO
+        # -----
+        # Customer = Cavenders Boot City# 090
+        # Delivery address = Cavenders Boot City #090
+        # Invoice address = Cavenders
+
+        # TRA9999 is dropship
+        # TRA9999 is ref field set on contact Tractor Supply Drop Ship Store
+        # Parent is Tractor Supply
+        # SO
+        # -----
+        # Customer = Tractor Supply Drop Ship Store
+        # Delivery Address =(example) Hannah Wood
+        # <With address details from flat file>
+        # Invoice address = Tractor Supply
+        partner = self.create_partner(ref=row[2], company_type='company')
+        parent_id = partner.parent_id
+        partner_id = partner
+        partner_shipping_id = not partner.is_drop_ship and partner or self.create_partner(name=row[5], address=row[6:12], type='delivery')
+        partner_invoice_id = parent_id or self.create_partner(name=row[13], address=row[14:20], type='invoice')
         payment_term = self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
         order_data = {
             'name': self.env['ir.sequence'].next_by_code('edi.sale.order'),
-            'partner_id': partner_id,
+            'partner_id': partner_id.id,
+            'user_id': partner_id.user_id.id,
             'client_order_ref': row[3] or False,
             'date_order': row[4] and datetime.strptime(row[4], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
-            'partner_shipping_id': partner_shipping_id,
-            'partner_invoice_id': partner_invoice_id,
+            'partner_shipping_id': partner_shipping_id.id,
+            'partner_invoice_id': partner_invoice_id.id,
             'tra_store': row[12],
             'x_studio_ship_by': row[21] or False,
             'commitment_date': row[22] and datetime.strptime(row[22], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT) or False,  # Ship Dates
