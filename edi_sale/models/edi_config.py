@@ -30,12 +30,15 @@ class SyncDocumentType(models.Model):
         for row in rows:
             product = product_product.search(['|', ('barcode', 'in', [row[2], row[4]]), ('default_code', '=', row[3])], limit=1)
             uom = self.env['uom.uom'].search([('name', 'ilike', row[7])], limit=1)
+            name = str(row[5])
             if not product:
-                product = product_product.create({'name': row[5], 'barcode': row[2], 'default_code': row[3], 'uom_id': uom and uom.id})
+                name = 'Product Not found FROM the EDI:\n Name: %s \n Barcode: %s \n Internal Ref: %s' % (row[5], row[2], row[3])
+                product = self.env.ref('edi_sale.edi_product_product_error', raise_if_not_found=False)
+                _logger.info('Product Not found FROM the EDI:\n Name: %s \n Barcode: %s \n Internal Ref: %s' % (row[5], row[2], row[3]))
             line_data = {
                 'order_id': order.id,
                 'product_id': product.id,
-                'name': str(row[5]),
+                'name': name,
                 'product_uom_qty': float(row[6]),
                 'product_uom': uom and uom.id,
                 'price_unit': float(row[8]),
@@ -73,6 +76,9 @@ class SyncDocumentType(models.Model):
                     'country_id': country and country.id,
                     })
             res_partner = res_partner.create(data)
+        if not res_partner:
+            res_partner = self.env.ref('edi_sale.res_partner_error', raise_if_not_found=False)
+            res_partner.message_post(body=_('EDI Partner Data not found, \n Name: %s \n REF: %s \n Address: %s' % (name, ref, address)))
         return res_partner
 
     def prepared_order_from_flatfile(self, row):
@@ -126,6 +132,18 @@ class SyncDocumentType(models.Model):
         # Allowance Amount2
         return order_data
 
+    def _log_logging(self, name, message, function_name, path):
+        return self.env['ir.logging'].sudo().create({
+            'name': name,
+            'type': 'server',
+            'level': 'DEBUG',
+            'dbname': self.env.cr.dbname,
+            'message': message,
+            'func': function_name,
+            'path': path,
+            'line': '0',
+        })
+
     def _do_import_so_flat(self, conn, sync_action_id, values):
         '''
         This is dummy demo method.
@@ -153,8 +171,8 @@ class SyncDocumentType(models.Model):
                 line_count = 0
                 rows = []
                 for row in csv_reader:
-                    if line_count == 0:
-                        try:
+                    try:
+                        if line_count == 0:
                             sale_order = order.search([('client_order_ref', '=', row[3]), ('tra_store', '=', row[12]), ('client_order_ref', '!=', False), ('tra_store', '!=', False)])
                             if sale_order:
                                 _logger.warning('order already created from the file of %s and customer po: %s and store number: %s' % (file, row[3], row[12]))
@@ -162,10 +180,15 @@ class SyncDocumentType(models.Model):
                             order = order.create(self.prepared_order_from_flatfile(row))
                             _logger.info('Order Created: %s' % order.name)
                             line_count = 1
-                        except Exception:
-                            _logger.error('Order has required fields not set - FILE: %s ' % file)
-                    else:
-                        rows.append(row)
+                        else:
+                            rows.append(row)
+                    except Exception as e:
+                        lname = 'Order has required fields not set - FILE'
+                        lmessage = str(e)
+                        lfunc = '_do_import_so_flat'
+                        lpath = file
+                        self._log_logging(lname, lmessage, lfunc, lpath)
+                        _logger.info('Order has required fields not set - FILE: %s ' % file)
                 if order:
                     try:
                         order_line_data = self.prepared_order_line_from_flatfile(order, rows)
@@ -173,10 +196,14 @@ class SyncDocumentType(models.Model):
                         # git the errro after create the order
                         # odoo.exceptions.CacheMiss:
                         self.flush()
-                    except Exception:
-                        _logger.error('Order Line has required fields not set - FILE: %s ' % file)
+                        order.sudo().message_post(body=_('Sale Order Created from the EDI File of: %s' % file))
+                    except Exception as e:
+                        lname = 'Order Line has required fields not set'
+                        lmessage = str(e)
+                        lfunc = '_do_import_so_flat'
+                        lpath = str(file)
+                        self._log_logging(lname, lmessage, lfunc, lpath)
+                        _logger.info('Order Line has required fields not set - FILE: %s ' % file)
                 file_data.close()
-                if order:
-                    order.sudo().message_post(body=_('Sale Order Created from the EDI File of: %s' % file))
         conn._disconnect()
         return True

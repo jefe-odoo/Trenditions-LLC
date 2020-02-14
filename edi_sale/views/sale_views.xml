@@ -13,4 +13,8 @@
             </data>
         </field>
     </record>
+    <menuitem id="sale_order_edi"
+        parent="sale.sale_order_menu"
+        sequence="10"
+        action="action_sale_order_edi" />
 </odoo>
