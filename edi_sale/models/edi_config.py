@@ -107,8 +107,9 @@ class SyncDocumentType(models.Model):
         partner_shipping_id = not partner.is_drop_ship and partner or self.create_partner(name=row[5], address=row[6:12], type='delivery')
         partner_invoice_id = parent_id or self.create_partner(name=row[13], address=row[14:20], type='invoice')
         payment_term = self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
+        carrier = self.env['delivery.carrier'].search([('name', 'ilike', row[21])], limit=1)
         order_data = {
-            'name': self.env['ir.sequence'].next_by_code('edi.sale.order'),
+            'name': self.env['ir.sequence'].sudo().next_by_code('edi.sale.order'),
             'partner_id': partner_id.id,
             'user_id': partner_id.user_id.id,
             'client_order_ref': row[3] or False,
@@ -116,7 +117,7 @@ class SyncDocumentType(models.Model):
             'partner_shipping_id': partner_shipping_id.id,
             'partner_invoice_id': partner_invoice_id.id,
             'tra_store': row[12],
-            'x_studio_ship_by': row[21] or False,
+            'carrier_id': carrier and carrier.id or False,
             'commitment_date': row[22] and datetime.strptime(row[22], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT) or False,  # Ship Dates
             'payment_term_id': payment_term and payment_term.id,
             'x_studio_order_notes': row[24] or False,
@@ -156,9 +157,9 @@ class SyncDocumentType(models.Model):
         conn._connect()
         conn.cd(sync_action_id.dir_path)
         files = conn.ls()
-        order = self.env['sale.order'].sudo()
-        order_line = self.env['sale.order.line'].sudo()
         for file in files:
+            order = self.env['sale.order'].sudo()
+            order_line = self.env['sale.order.line'].sudo()
             if not file.endswith('.csv'):
                 continue
             file_path = os.path.join(sync_action_id.dir_path, file)
@@ -183,12 +184,12 @@ class SyncDocumentType(models.Model):
                         else:
                             rows.append(row)
                     except Exception as e:
-                        lname = 'Order has required fields not set - FILE'
-                        lmessage = str(e)
-                        lfunc = '_do_import_so_flat'
-                        lpath = file
-                        self._log_logging(lname, lmessage, lfunc, lpath)
                         _logger.info('Order has required fields not set - FILE: %s ' % file)
+                        # lname = 'Order has required fields not set - FILE'
+                        # lmessage = str(e)
+                        # lfunc = '_do_import_so_flat'
+                        # lpath = file
+                        # self._log_logging(lname, lmessage, lfunc, lpath)
                 if order:
                     try:
                         order_line_data = self.prepared_order_line_from_flatfile(order, rows)
@@ -198,12 +199,12 @@ class SyncDocumentType(models.Model):
                         self.flush()
                         order.sudo().message_post(body=_('Sale Order Created from the EDI File of: %s' % file))
                     except Exception as e:
-                        lname = 'Order Line has required fields not set'
-                        lmessage = str(e)
-                        lfunc = '_do_import_so_flat'
-                        lpath = str(file)
-                        self._log_logging(lname, lmessage, lfunc, lpath)
                         _logger.info('Order Line has required fields not set - FILE: %s ' % file)
+                        # lname = 'Order Line has required fields not set'
+                        # lmessage = str(e)
+                        # lfunc = '_do_import_so_flat'
+                        # lpath = str(file)
+                        # self._log_logging(lname, lmessage, lfunc, lpath)
                 file_data.close()
         conn._disconnect()
         return True
