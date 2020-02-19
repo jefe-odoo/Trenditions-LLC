@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sync_document_type_form_inheirt_invoice" model="ir.ui.view">
+            <field name="name">view.sync.document.type.form.inherit.invoice</field>
+            <field name="model">sync.document.type</field>
+            <field name="inherit_id" ref="base_edi.view_sync_document_type_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <group name="grp_sub_1" position="after">
+                        <group name="grp_sub_2">
+                            <field name="segment_terminator"/>
+                            <field name="data_ele_separator"/>
+                            <field name="component_ele_separator"/>
+                        </group>
+                    </group>
+                </data>
+            </field>
+        </record>
+    </data>
+</odoo>

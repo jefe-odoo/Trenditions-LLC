@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_move_form_inherit_edi_sale" model="ir.ui.view">
+        <field name="name">view.account.move.form.inherit.edi.sale</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//group[@id='other_tab_group']" position="inside">
+                    <group string='EDI Document Information'>
+                        <field name="edi_status"/>
+                        <field name="edi_date"/>
+                    </group>
+                </xpath>
+            </data>
+        </field>
+    </record>
+    <record model="ir.actions.server" id="action_export_account_invoice_to_edi">
+        <field name="name">export invoices to Edi</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    records.export_invoice_to_edi()
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="sync_document_import_sale" model="sync.document.type">
+            <field name="name">Import Sale Order (Flatfile TrueCommence)</field>
+            <field name="doc_code">import_so_flat</field>
+            <field name="op_type">in-mv</field>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="res_partner_error" model="res.partner">
+            <field name="name">EDI Partner Error</field>
+            <field name="active">False</field>
+        </record>
+        <record id="edi_product_product_error" model="product.product">
+            <field name="name">EDI Product Error</field>
+            <field name="active">False</field>
+        </record>
+    </data>
+    <record model="ir.actions.server" id="action_sale_order_edi">
+        <field name="name">EDI Sale Order Import</field>
+        <field name="model_id" ref="base_edi.model_edi_sync_action"/>
+        <field name="state">code</field>
+        <field name="code">
+model._do_doc_sync_cron()
+        </field>
+    </record>
+</odoo>
