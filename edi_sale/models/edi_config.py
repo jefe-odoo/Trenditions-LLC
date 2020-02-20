@@ -102,7 +102,7 @@ class SyncDocumentType(models.Model):
         # <With address details from flat file>
         # Invoice address = Tractor Supply
         partner = self.create_partner(ref=row[2], company_type='company')
-        parent_id = partner.parent_id
+        parent_id = partner.parent_id or partner
         partner_id = partner
         partner_shipping_id = not partner.is_drop_ship and partner or self.create_partner(name=row[5], address=row[6:12], type='delivery')
         partner_invoice_id = parent_id or self.create_partner(name=row[13], address=row[14:20], type='invoice')
