@@ -65,7 +65,7 @@ class SyncDocumentType(models.Model):
                     'parent_id': parent_id,
                 }
             if address:
-                state = self.env['res.country.state'].search([('code', '=', address[3])], limit=1)
+                state = self.env['res.country.state'].search([('code', '=', address[3]), ('country_id.code', '=', address[5])], limit=1)
                 country = self.env['res.country'].search([('code', '=', address[5])], limit=1)
                 data.update({
                     'street': address[0],
@@ -103,15 +103,14 @@ class SyncDocumentType(models.Model):
         # Invoice address = Tractor Supply
         partner = self.create_partner(ref=row[2], company_type='company')
         parent_id = partner.parent_id or partner
-        partner_id = partner
         partner_shipping_id = not partner.is_drop_ship and partner or self.create_partner(name=row[5], address=row[6:12], type='delivery')
         partner_invoice_id = parent_id or self.create_partner(name=row[13], address=row[14:20], type='invoice')
-        payment_term = self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
+        payment_term = partner.property_payment_term_id or self.env['account.payment.term'].search([('name', 'ilike', row[23])], limit=1)
         carrier = self.env['delivery.carrier'].search([('name', 'ilike', row[21])], limit=1)
         order_data = {
             'name': self.env['ir.sequence'].sudo().next_by_code('edi.sale.order'),
-            'partner_id': partner_id.id,
-            'user_id': partner_id.user_id.id,
+            'partner_id': partner.id,
+            'user_id': partner.user_id.id,
             'client_order_ref': row[3] or False,
             'date_order': row[4] and datetime.strptime(row[4], EDI_DATE_FORMAT).strftime(DEFAULT_SERVER_DATE_FORMAT),  # PO Date
             'partner_shipping_id': partner_shipping_id.id,
