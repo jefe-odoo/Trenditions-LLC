@@ -5,6 +5,7 @@ import os
 import pprint
 import logging
 import xlwt
+import csv
 
 from odoo import api, fields, models, _
 
@@ -165,19 +166,14 @@ class SyncDocumentType(models.Model):
         if invoices:
             for invoice in invoices:
                 invoice_data = self.make_invoice_x12_flatfile_data(invoice)
-                workbook = xlwt.Workbook()
-                sheet = workbook.add_sheet(invoice.name)
-
                 # Specifying column
                 if invoice_data:
-                    row = 0
-                    for values in invoice_data:
-                        for v in range(0, len(values)):
-                            sheet.write(row, v, str(values[v]))
-                        row += 1
-                    workbook.save("invoice_info_%s.xls" % invoice.name.replace('/', '_'))
+                    filename = 'invoice_info_%s.csv' % invoice.name.replace('/', '_')
+                    csv.register_dialect('myDialect', delimiter=',')
+                    with open(filename, 'w', newline='') as file:
+                        writer = csv.writer(file, dialect='myDialect')
+                        writer.writerows(invoice_data)
                     # TODO : used upload method of sftp
-                    filename = 'invoice_info_%s.xls' % invoice.name.replace('/', '_')
                     filename = filename.strip()
                     try:
                         with open(filename, 'rb') as file:
