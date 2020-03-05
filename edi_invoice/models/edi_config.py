@@ -83,7 +83,7 @@ class SyncDocumentType(models.Model):
         # join_data_ele = '%s' % (self.data_ele_separator)
         header_data_elements = [
             'H', '810',
-            invoice.partner_id.id,
+            invoice.partner_id.ref or '',
             invoice.name,
             invoice.invoice_date and invoice.invoice_date.strftime(EDI_DATE_FORMAT) or '',
             order_id.name if order_id else '',
