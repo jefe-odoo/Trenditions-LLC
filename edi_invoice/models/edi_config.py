@@ -86,7 +86,7 @@ class SyncDocumentType(models.Model):
             invoice.x_studio_edi_so_ref or '',
             invoice.name,
             invoice.invoice_date and invoice.invoice_date.strftime(EDI_DATE_FORMAT) or '',
-            order_id.name if order_id else '',
+            invoice.ref or '',
             order_id.date_order.strftime(EDI_DATE_FORMAT) if order_id else '',
             '',  # Bill of Lading
             '',  # Carrier Pro
