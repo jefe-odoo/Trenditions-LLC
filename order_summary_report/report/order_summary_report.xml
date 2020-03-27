@@ -41,6 +41,7 @@
                                     <th >Item Description</th>
                                     <th>Item Type</th>
                                     <th style="text-align:right;">On Hand Qty</th>
+                                    <th style="text-align:right;">Qty Available</th>
                                     <th style="text-align:right;">PO Qty.</th>
 
                                     <th style="text-align:right;">Order Qty.</th>
@@ -50,7 +51,7 @@
                             <tbody>
                                 <t t-if="not o.get_lines()">
                                     <tr>
-                                        <td colspan="8">
+                                        <td colspan="10">
                                             <b>No Record found for selected Filters.</b>
                                         </td>
                                     </tr>
@@ -62,8 +63,10 @@
                                             <t t-esc="l['x_studio_bin_location_v']"/>
                                         </td>
                                         <td><t t-esc="l['name']"/></td>
-                                        <td><t t-esc="l['category']"/></td>
+<!--                                        <td><t t-esc="l['category']"/></td>-->
+                                        <td><t t-esc="l['x_studio_item_type']"/></td>
                                         <td style="text-align:right;"><t t-esc="l['current_stock']"/></td>
+                                        <td style="text-align:right;"><t t-esc="l['forecasted']"/></td>
                                         <td style="text-align:right;"><t t-esc="l['purchase_value']"/></td>
 
                                         <td style="text-align:right;"><t t-esc="l['sale_value']"/></td>
