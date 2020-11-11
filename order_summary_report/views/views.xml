@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<menuitem id="sale_order_summary_report"
+            name="Order Summary Report"
+            action="action_trendition_order_summary_report_form"
+            parent="sale.menu_sale_report"
+            sequence="2"/>
+</odoo>
