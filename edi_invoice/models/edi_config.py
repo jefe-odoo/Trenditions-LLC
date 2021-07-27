@@ -19,20 +19,17 @@ class SyncDocumentType(models.Model):
     _inherit = 'sync.document.type'
 
     doc_code = fields.Selection(selection_add=[
-                                ('export_invoice_flat', '810 - Export Invoice (TrueCommerce Flatfile)'),
-                                ])
+        ('export_invoice_flat', '810 - Export Invoice (TrueCommerce Flatfile)'),
+        ], ondelete={'export_invoice_flat': 'cascade'})
     segment_terminator = fields.Char(string='Segment Terminator',
-                        help='Symbol representing segment terminator delimiter, Industry practice: return/linefeed (\\r\\n")',
-                        default='\\r\\n'
-                                     )
+        help='Symbol representing segment terminator delimiter, Industry practice: return/linefeed (\\r\\n")',
+        default='\\r\\n')
     data_ele_separator = fields.Char(string='Data Element Separator',
-                        help='Symbol representing data element separator. Industry practice : asterisk (*), tilde (~)',
-                        default='*'
-                                     )
+        help='Symbol representing data element separator. Industry practice : asterisk (*), tilde (~)',
+        default='*')
     component_ele_separator = fields.Char(string='Component Element Separator',
-                        help='Symbol representing Component element separator. Industry practice : colon (:)',
-                        default=':'
-                                          )
+        help='Symbol representing Component element separator. Industry practice : colon (:)',
+        default=':')
 
     def _do_export_po(self, conn, sync_action_id, values):
         '''

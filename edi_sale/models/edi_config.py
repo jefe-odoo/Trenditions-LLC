@@ -21,8 +21,8 @@ class SyncDocumentType(models.Model):
     _inherit = 'sync.document.type'
 
     doc_code = fields.Selection(selection_add=[
-                                ('import_so_flat', '850 - Import Order (TrueCommerce Flatfile)'),
-                                ])
+        ('import_so_flat', '850 - Import Order (TrueCommerce Flatfile)'),
+        ], ondelete={'import_so_flat': 'cascade'})
 
     def prepared_order_line_from_flatfile(self, order, rows):
         order_line_data = []
