@@ -25,7 +25,6 @@ class SFTPConnection(FTPConnection):
             gss_host=socket.getfqdn(self._host),
             gss_auth=False,
             gss_kex=False,
-            timeout=10,
         )
         self._conn = paramiko.SFTPClient.from_transport(transport)
 
