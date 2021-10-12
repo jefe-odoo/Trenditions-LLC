@@ -44,6 +44,8 @@ class SyncDocumentType(models.Model):
                 'price_unit': float(row[8]),
                 'display_type': False,
             }
+            self._check_cavendar_client(line_data)
+
             # Pack Size
             # # of Inner Packs
             # Item Allowance Percent1
@@ -131,6 +133,23 @@ class SyncDocumentType(models.Model):
         # Allowance Percent2
         # Allowance Amount2
         return order_data
+
+    '''
+    (New) Checks if the partner is with Cavendar. If they are, checks if a 
+    cavendar specific product (barcode that starts with CV) exists. If it does,
+    then change the product to that one
+    '''
+    def _check_cavendar_client(self, line_data):
+        self.ensure_one()
+        order_id = self.env['sale.order'].browse([line_data['order_id']])
+        product_id = self.env['product.product'].browse([line_data['product_id']])
+        partner_id = order_id.partner_id
+
+        if not partner_id.ref.startswith('CAV'):
+            return
+        cavendar_product_id = self.env['product.product'].search([('barcode', '=', f'CV{product_id.barcode}')])
+        if cavendar_product_id:
+            line_data['product_id'] = cavendar_product_id.id
 
     def _log_logging(self, name, message, function_name, path):
         return self.env['ir.logging'].sudo().create({

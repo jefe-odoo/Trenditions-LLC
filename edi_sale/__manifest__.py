@@ -9,7 +9,7 @@ Allows Exporting EDI Purchase to True Commerce
 ==============================================
 EDI Purchase Import/Export (850)
 """,
-    'depends': ['base_edi', 'sale_management'],
+    'depends': ['base_edi', 'sale_management', 'delivery'],
     'data': [
         'data/edi_sale_data.xml',
         'views/partner_views.xml',
