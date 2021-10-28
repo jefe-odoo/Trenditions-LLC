@@ -7,10 +7,11 @@ from odoo.tools import float_is_zero
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-class ReportAccountAgedPartner(models.AbstractModel):
+class ReportAccountAgedPartnerBalance(models.AbstractModel):
+    _name = "report.account.report_agedpartnerbalance_date"
     _inherit = "report.account.report_agedpartnerbalance"
 
-    def _get_partner_move_lines(self, account_type, date_from, target_move, period_length):
+    def _get_partner_move_lines_date(self, account_type, date_from, target_move, period_length):
         # This method can receive the context key 'include_nullified_amount' {Boolean}
         # Do an invoice and a payment and unreconcile. The amount will be nullified
         # By default, the partner wouldn't appear in this report.
@@ -130,6 +131,9 @@ class ReportAccountAgedPartner(models.AbstractModel):
             cr.execute(query, args_list)
             partners_amount = {}
             aml_ids = [x[0] for x in cr.fetchall()]
+            print("@@@@@@@@@@@ args_list :- ", args_list)
+            print("&&&&&&&&&&&&& cr.fetchall :- ", cr.fetchall)
+            print("%%%%%%%%%%%%% aml_ids:- ", aml_ids)
             # prefetch the fields that will be used; this avoid cache misses,
             # which look up the cache to determine the records to read, and has
             # quadratic complexity when the number of records is large...
@@ -238,3 +242,38 @@ class ReportAccountAgedPartner(models.AbstractModel):
             if at_least_one_amount or (self._context.get('include_nullified_amount') and lines[partner['partner_id']]):
                 res.append(values)
         return res, total, lines
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        if not data.get('form') or not self.env.context.get('active_model') or not self.env.context.get('active_id'):
+            raise UserError(_("Form content is missing, this report cannot be printed."))
+
+        total = []
+        model = self.env.context.get('active_model')
+        docs = self.env[model].browse(self.env.context.get('active_id'))
+
+        target_move = data['form'].get('target_move', 'all')
+        date_from = fields.Date.from_string(data['form'].get('date_from')) or fields.Date.today()
+
+        if data['form']['result_selection'] == 'customer':
+            account_type = ['receivable']
+        elif data['form']['result_selection'] == 'supplier':
+            account_type = ['payable']
+        else:
+            account_type = ['payable', 'receivable']
+
+        # if account_type == ['payable']:
+        #     date_from = 
+
+        movelines, total, dummy = self._get_partner_move_lines_date(account_type, date_from, target_move, data['form']['period_length'])
+        return {
+            'doc_ids': self.ids,
+            'doc_model': model,
+            'data': data['form'],
+            'docs': docs,
+            'time': time,
+            'get_partner_lines': movelines,
+            'get_direction': total,
+            'company_id': self.env['res.company'].browse(
+                data['form']['company_id'][0]),
+        }

@@ -1,5 +1,5 @@
 {
-    'name': "Aged Reports by Date",
+    'name': "account_aged",
     'summary': """
         Limit visibility to Sales Teams""",
     'description': """
@@ -15,8 +15,7 @@
         'account',
         'account_reports',
     ],
-    # 'data': [
-    #     # 'views/template_view.xml',
-    #     'data/account_financial_report_data.xml',
-    # ],
+    'data': [
+        'data/account_financial_report_data.xml',
+    ],
 }
