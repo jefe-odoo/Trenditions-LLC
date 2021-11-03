@@ -139,6 +139,16 @@ class TrenditionOrderWarehouseReport(models.Model):
                 if quant_records:
                     current_stock += sum(l[1] for l in quant_records)                   
                 current_stock_value = current_stock * product.standard_price
+
+                #New code for new column Expected PO Delivery Date
+                cr = self.env.cr
+                cr.execute(
+                "Select x_studio_expected_arrival_date "\
+                "FROM purchase_order "\
+                "WHERE "\
+                "partner_id = %s  and (state = 'draft' or state = 'sent') limit 1", (self.customer_reference))
+                expected_delivery_date = cr.fetchall()
+
                 vals = {
                     'sku': product.default_code,
                     'name': product.name,
