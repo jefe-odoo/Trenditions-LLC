@@ -8,10 +8,10 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 class ReportAccountAgedPartnerBalance(models.AbstractModel):
-    _name = "report.account.report_agedpartnerbalance_date"
+    _name = "report.account.report_agedpartnerbalance_custom"
     _inherit = "report.account.report_agedpartnerbalance"
 
-    def _get_partner_move_lines_date(self, account_type, date_from, target_move, period_length):
+    def _get_partner_move_lines_custom(self, account_type, date_from, target_move, period_length):
         # This method can receive the context key 'include_nullified_amount' {Boolean}
         # Do an invoice and a payment and unreconcile. The amount will be nullified
         # By default, the partner wouldn't appear in this report.
@@ -44,6 +44,8 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
         total = []
         partner_clause = ''
         cr = self.env.cr
+        # custom code begins:- took one variable named 'filter_date' for filtering reports.
+        filter_date = 'am.invoice_date' if ctx.get('account_type') == 'payable' else 'l.date'
         user_company = self.env.company
         user_currency = user_company.currency_id
         company_ids = self._context.get('company_ids') or [user_company.id]
@@ -62,7 +64,7 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
             partner_ids = self.env['res.partner'].search([('category_id', 'in', ctx['partner_categories'].ids)]).ids
             arg_list += (tuple(partner_ids or [0]),)
         arg_list += (date_from, tuple(company_ids))
-
+        # custom code begins:- changes in the query, use 'filter_date' at last.
         query = '''
             SELECT DISTINCT l.partner_id, res_partner.name AS name, UPPER(res_partner.name) AS UPNAME, CASE WHEN prop.value_text IS NULL THEN 'normal' ELSE prop.value_text END AS trust
             FROM account_move_line AS l
@@ -81,13 +83,12 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
                         )
                     )
                     ''' + partner_clause + '''
-                AND l.date <= %s
+                AND {} <= %s
                 AND l.company_id IN %s
             ORDER BY UPPER(res_partner.name)
-            '''
+            '''.format(filter_date)
         arg_list = (self.env.company.id,) + arg_list
         cr.execute(query, arg_list)
-
         partners = cr.dictfetchall()
         # put a total of 0
         for i in range(7):
@@ -105,7 +106,8 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
         history = []
         for i in range(5):
             args_list = (tuple(move_state), tuple(account_type), tuple(partner_ids),)
-            dates_query = 'l.date'
+            # custom code begins:- changes in 'dates_query' because of the requirement which is based on 'invoice_date'
+            dates_query = 'am.invoice_date'
 
             if periods[str(i)]['start'] and periods[str(i)]['stop']:
                 dates_query += ' BETWEEN %s AND %s'
@@ -117,7 +119,7 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
                 dates_query += ' <= %s'
                 args_list += (periods[str(i)]['stop'],)
             args_list += (date_from, tuple(company_ids))
-
+            # custom code begins:- changes in the query (change Order By as per the requirement) and use 'filter_date' at last
             query = '''SELECT l.id
                     FROM account_move_line AS l, account_account, account_move am
                     WHERE (l.account_id = account_account.id) AND (l.move_id = am.id)
@@ -125,15 +127,13 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
                         AND (account_account.internal_type IN %s)
                         AND ((l.partner_id IN %s) OR (l.partner_id IS NULL))
                         AND ''' + dates_query + '''
-                    AND l.date <= %s
+                    AND {} <= %s
                     AND l.company_id IN %s
-                    ORDER BY l.date'''
+                    ORDER BY am.invoice_date'''.format(filter_date)
+
             cr.execute(query, args_list)
             partners_amount = {}
             aml_ids = [x[0] for x in cr.fetchall()]
-            print("@@@@@@@@@@@ args_list :- ", args_list)
-            print("&&&&&&&&&&&&& cr.fetchall :- ", cr.fetchall)
-            print("%%%%%%%%%%%%% aml_ids:- ", aml_ids)
             # prefetch the fields that will be used; this avoid cache misses,
             # which look up the cache to determine the records to read, and has
             # quadratic complexity when the number of records is large...
@@ -168,16 +168,18 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
 
         # This dictionary will store the not due amount of all partners
         undue_amounts = {}
+        # custom code begin :- changed [(COALESCE(l.date_maturity,l.date)] and ORDER BY with 'am.invoice_date' as per the requirement and use 'filter_date' at last.
         query = '''SELECT l.id
                 FROM account_move_line AS l, account_account, account_move am
                 WHERE (l.account_id = account_account.id) AND (l.move_id = am.id)
                     AND (am.state IN %s)
                     AND (account_account.internal_type IN %s)
-                    AND l.date >= %s\
+                    AND am.invoice_date >= %s\
                     AND ((l.partner_id IN %s) OR (l.partner_id IS NULL))
-                AND l.date <= %s
+                AND {} <= %s
                 AND l.company_id IN %s
-                ORDER BY l.date'''
+                ORDER BY am.invoice_date'''.format(filter_date)
+
         cr.execute(query, (tuple(move_state), tuple(account_type), date_from, tuple(partner_ids), date_from, tuple(company_ids)))
         aml_ids = cr.fetchall()
         aml_ids = aml_ids and [x[0] for x in aml_ids] or []
@@ -251,10 +253,8 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
         total = []
         model = self.env.context.get('active_model')
         docs = self.env[model].browse(self.env.context.get('active_id'))
-
         target_move = data['form'].get('target_move', 'all')
         date_from = fields.Date.from_string(data['form'].get('date_from')) or fields.Date.today()
-
         if data['form']['result_selection'] == 'customer':
             account_type = ['receivable']
         elif data['form']['result_selection'] == 'supplier':
@@ -262,10 +262,8 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
         else:
             account_type = ['payable', 'receivable']
 
-        # if account_type == ['payable']:
-        #     date_from = 
-
-        movelines, total, dummy = self._get_partner_move_lines_date(account_type, date_from, target_move, data['form']['period_length'])
+        # custom code begins:- changed the method name as we created  new reports as per the requirement
+        movelines, total, dummy = self._get_partner_move_lines_custom(account_type, date_from, target_move, data['form']['period_length'])
         return {
             'doc_ids': self.ids,
             'doc_model': model,

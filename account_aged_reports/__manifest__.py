@@ -1,10 +1,10 @@
 {
     'name': "account_aged",
     'summary': """
-        Limit visibility to Sales Teams""",
+        Accounting Reports based on Dates (Invoice / Bill Date)""",
     'description': """
         Task: 2647913
-        The reports are age based on client's invoice date rather than the due date
+        Aged Payable and Aged Receivable reports are age based on invoice date rather than the due date
     """,
     "author": "Odoo Inc",
     "website": "http://www.odoo.com",
