@@ -159,11 +159,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                             expected_delivery_date = [i][j]
                 else:
                     expected_delivery_date = expected_delivery_dates
-
-                if expected_delivery_date <= date.today():
-                    expected_delivery_date = null
                     
-
                 vals = {
                     'sku': product.default_code,
                     'name': product.name,
