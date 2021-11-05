@@ -158,6 +158,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                                 continue
                             if i[j] < expected_delivery_date:
                                 expected_delivery_date = [i][j]
+                else:
+                    expected_delivery_date = expected_delivery_dates
 
                 vals = {
                     'sku': product.default_code,
