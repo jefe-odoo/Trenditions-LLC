@@ -150,20 +150,14 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "and id in (select order_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s)) "\
                 "and (state = 'draft' or state = 'sent')" , (product.default_code, product.default_code))
                 expected_delivery_dates = cr.fetchall()
-                expected_delivery_date = expected_delivery_dates[0]
-                #size = len(expected_delivery_dates)
-                #i = 0
-                #while (i < size):
-                #    if expected_delivery_dates[i] < date.today():
-                #        continue
-                #    if expected_delivery_dates[i] < expected_delivery_date:
-                #        expected_delivery_date = expected_delivery_dates[i]
-                for i in expected_delivery_dates:
-                    for j in i:
-                        if i[j] < datetime.today():
-                            continue
-                        if i[j] < expected_delivery_date:
-                            expected_delivery_date = [i][j]
+                if expected_delivery_dates:
+                    expected_delivery_date = expected_delivery_dates[0]
+                    for i in expected_delivery_dates:
+                        for j in i:
+                            if i[j] < datetime.today():
+                                continue
+                            if i[j] < expected_delivery_date:
+                                expected_delivery_date = [i][j]
 
                 vals = {
                     'sku': product.default_code,
