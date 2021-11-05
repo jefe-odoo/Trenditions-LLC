@@ -147,7 +147,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "FROM purchase_order "\
                 "WHERE "\
                 "partner_id in (select id from res_partner) and "\
-                "(state = 'draft' or state = 'sent') limit 1 ")
+                "(state = 'draft' or state = 'sent')")
                 expected_delivery_date = cr.fetchall()
 
                 vals = {
