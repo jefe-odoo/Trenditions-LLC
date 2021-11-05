@@ -94,7 +94,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "WHERE "\
                 "order_id in (select id from sale_order where state <> 'cancel' and create_date >= %s and create_date <= %s) and "\
                 "product_id = %s", (self.date_from,self.date_to, product.id))
-                sale_obj = cr.fetchall()    
+                sale_obj = cr.fetchall()
 
             if sale_obj:
                 for i in sale_obj:
@@ -146,8 +146,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select x_studio_expected_arrival_date "\
                 "FROM purchase_order "\
                 "WHERE "\
-                "partner_id in (select id from res_partner) and "\
-                "(state = 'draft' or state = 'sent')")
+                "partner_id in (select partner_id from purchase_order_line where product_id = %s) and "\
+                "(state = 'draft' or state = 'sent')", (product.id))
                 expected_delivery_date = cr.fetchall()
 
                 vals = {
