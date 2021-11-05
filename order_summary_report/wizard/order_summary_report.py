@@ -146,8 +146,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select x_studio_expected_arrival_date "\
                 "FROM purchase_order "\
                 "WHERE "\
-                "partner_id in (select partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE '%s')) "\
-                "and id in (select order_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE '%s')) "\
+                "partner_id in (select partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s')) "\
+                "and id in (select order_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s')) "\
                 "and (state = 'draft' or state = 'sent')" , (product.default_code, product.default_code))
                 expected_delivery_date = cr.fetchall()
                 #expected_delivery_date = expected_delivery_dates[0]
