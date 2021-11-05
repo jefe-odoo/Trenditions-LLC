@@ -154,7 +154,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     expected_delivery_date = expected_delivery_dates[0]
                     for i in expected_delivery_dates:
                         for j in range(len(i)):
-                            if i[j] < datetime.today():
+                            if i[j] < date.today():
                                 continue
                             if i[j] < expected_delivery_date:
                                 expected_delivery_date = [i][j]
