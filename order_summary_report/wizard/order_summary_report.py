@@ -153,12 +153,16 @@ class TrenditionOrderWarehouseReport(models.Model):
                 if expected_delivery_dates:
                     expected_delivery_date = expected_delivery_dates[0]
                     for i in expected_delivery_dates:
-                        if i < expected_delivery_date:
+                        if i < date.today():
                             continue
-                        if i < expected_delivery_date:
+                        elif i < expected_delivery_date:
                             expected_delivery_date = [i][j]
                 else:
                     expected_delivery_date = expected_delivery_dates
+
+                if expected_delivery_date <= date.today():
+                    expected_delivery_date = null
+                    
 
                 vals = {
                     'sku': product.default_code,
