@@ -150,7 +150,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "(state = 'draft' or state = 'sent')" % ('%' + product.default_code + '%'))
                 expected_delivery_dates = cr.fetchall()
                 expected_delivery_date = expected_delivery_dates[0]
-                for i in expected_delivery_dates:
+                for i in len(expected_delivery_dates):
                     if expected_delivery_dates[i] < datetime.today():
                         continue
                     if expected_delivery_dates[i] < expected_delivery_date:
