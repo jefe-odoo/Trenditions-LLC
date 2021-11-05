@@ -146,17 +146,17 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select x_studio_expected_arrival_date "\
                 "FROM purchase_order "\
                 "WHERE "\
-                "partner_id in (select partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE '%s')) and "\
-                "(state = 'draft' or state = 'sent')" % ('%' + product.default_code + '%'))
-                expected_delivery_dates = cr.fetchall()
-                expected_delivery_date = expected_delivery_dates[0]
-                size = len(expected_delivery_dates)
-                i = 0
-                while (i < size):
-                    if expected_delivery_dates[i] < date.today():
-                        continue
-                    if expected_delivery_dates[i] < expected_delivery_date:
-                        expected_delivery_date = expected_delivery_dates[i]
+                "id and partner_id in (select order_id, partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE '%s')) "\
+                "and (state = 'draft' or state = 'sent')" % (product.default_code))
+                expected_delivery_date = cr.fetchall()
+                #expected_delivery_date = expected_delivery_dates[0]
+                #size = len(expected_delivery_dates)
+                #i = 0
+                #while (i < size):
+                #    if expected_delivery_dates[i] < date.today():
+                #        continue
+                #    if expected_delivery_dates[i] < expected_delivery_date:
+                #        expected_delivery_date = expected_delivery_dates[i]
                 #for i in len(expected_delivery_dates):
                 #    if expected_delivery_dates[i] < datetime.today():
                 #        continue
