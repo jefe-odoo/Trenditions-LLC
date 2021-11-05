@@ -148,7 +148,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "WHERE "\
                 "partner_id in (select id from res_partner) and "\
                 "(state = 'draft' or state = 'sent') limit 1 ")
-                expected_delivery_date = cr.fetchone()
+                expected_delivery_date = cr.fetchall()
 
                 vals = {
                     'sku': product.default_code,
@@ -161,7 +161,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock': current_stock,
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
-                    'expected_delivery_date': expected_delivery_date[0],
+                    'expected_delivery_date': expected_delivery_date,
                 }
                 lines.append(vals)
         return lines
