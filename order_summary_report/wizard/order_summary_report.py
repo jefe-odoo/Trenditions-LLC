@@ -149,7 +149,9 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "partner_id in (select partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s)) "\
                 "and id in (select order_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s)) "\
                 "and (state = 'draft' or state = 'sent')" , (product.default_code, product.default_code))
+                #SQL statement selects arrival dates based on default codes of items in purchase order. A combination of inner select statements gives the expected arrival dates of each item shown in any arbitray order summary report. Item's purchase order must have status RFQ or RFQ sent though.
                 expected_delivery_dates = cr.fetchall()
+                #The if statement and for loop in the next few lines pick the closest date of delivery for the items in the order summary reports and assigns that value to expected_delivery_date, passing it into the order_summary_report.xml file.
                 if expected_delivery_dates:
                     for i in expected_delivery_dates:
                         expected_delivery_date = i[0]
