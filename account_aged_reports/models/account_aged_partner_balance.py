@@ -92,6 +92,15 @@ class ReportAccountAgedPartner(models.AbstractModel):
     _name = "account.aged.partner.date"
     _inherit = 'account.aged.partner'
 
+    def _get_columns_name(self, options):
+        columns = super()._get_columns_name(options)
+        ctx = self._context
+        if ctx.get('account_type') == 'payable' and ctx.get('model') == 'account.aged.payable.date':
+            columns.insert(1,{'name': _('Bill Date'), 'class': 'date', 'style': 'text-align:center; white-space:nowrap;'})
+        if ctx.get('account_type') == 'receivable' and ctx.get('model') == 'account.aged.receivable.date':
+            columns.insert(1,{'name': _('Invoice Date'), 'class': 'date', 'style': 'text-align:center; white-space:nowrap;'})
+        return columns
+
     @api.model
     def _get_lines(self, options, line_id=None):
         sign = -1.0 if self.env.context.get('aged_balance') else 1.0
@@ -110,20 +119,36 @@ class ReportAccountAgedPartner(models.AbstractModel):
         results, total, amls = self.env['report.account.report_agedpartnerbalance_custom'].with_context(**context)._get_partner_move_lines_custom(account_types, self._context['date_to'], 'posted', 30)
 
         for values in results:
-            # custom code begins:- just improve 5 in 'columns' instead of 4 because we added one more column
-            vals = {
-                'id': 'partner_%s' % (values['partner_id'],),
-                'name': values['name'],
-                'level': 2,
-                'columns': [{'name': ''}] * 5 + [{'name': self.format_value(sign * v), 'no_format': sign * v}
-                                                 for v in [values['direction'], values['4'],
-                                                           values['3'], values['2'],
-                                                           values['1'], values['0'], values['total']]],
-                'trust': values['trust'],
-                'unfoldable': True,
-                'unfolded': 'partner_%s' % (values['partner_id'],) in options.get('unfolded_lines'),
-                'partner_id': values['partner_id'],
-            }
+            # custom code begins:- just improve 6 in 'columns' instead of 4 because we added two more columns in 'receivable' and 'payable'
+            if self.env.context.get('model') == 'account.aged.receivable.date' or self.env.context.get('model') == 'account.aged.payable.date':
+                vals = {
+                    'id': 'partner_%s' % (values['partner_id'],),
+                    'name': values['name'],
+                    'level': 2,
+                    'columns': [{'name': ''}] * 6 + [{'name': self.format_value(sign * v), 'no_format': sign * v}
+                                                     for v in [values['direction'], values['4'],
+                                                               values['3'], values['2'],
+                                                               values['1'], values['0'], values['total']]],
+                    'trust': values['trust'],
+                    'unfoldable': True,
+                    'unfolded': 'partner_%s' % (values['partner_id'],) in options.get('unfolded_lines'),
+                    'partner_id': values['partner_id'],
+                }
+            # custom code begins:- just improve 5 in 'columns' instead of 4 because we added one more columns in 'receivable' and 'payable'
+            else:
+                vals = {
+                    'id': 'partner_%s' % (values['partner_id'],),
+                    'name': values['name'],
+                    'level': 2,
+                    'columns': [{'name': ''}] * 5 + [{'name': self.format_value(sign * v), 'no_format': sign * v}
+                                                     for v in [values['direction'], values['4'],
+                                                               values['3'], values['2'],
+                                                               values['1'], values['0'], values['total']]],
+                    'trust': values['trust'],
+                    'unfoldable': True,
+                    'unfolded': 'partner_%s' % (values['partner_id'],) in options.get('unfolded_lines'),
+                    'partner_id': values['partner_id'],
+                }
             lines.append(vals)
             if 'partner_%s' % (values['partner_id'],) in options.get('unfolded_lines'):
                 for line in amls[values['partner_id']]:
@@ -140,31 +165,58 @@ class ReportAccountAgedPartner(models.AbstractModel):
                     line_date = aml.date_maturity or aml.date
                     if not self._context.get('no_format'):
                         line_date = format_date(self.env, line_date)
-                    vals = {
-                        'id': aml.id,
-                        'name': aml.move_id.name,
-                        'class': 'date',
-                        'caret_options': caret_type,
-                        'level': 4,
-                        'parent_id': 'partner_%s' % (values['partner_id'],),
-                        'columns': [{'name': v} for v in [format_date(self.env, aml.date_maturity or aml.date), aml.move_id.invoice_payment_term_id.name, aml.journal_id.code, aml.account_id.display_name, format_date(self.env, aml.expected_pay_date)]] +
-                                   [{'name': self.format_value(sign * v, blank_if_zero=True), 'no_format': sign * v} for v in [line['period'] == 6-i and line['amount'] or 0 for i in range(7)]],
-                        'action_context': {
-                            'default_type': aml.move_id.type,
-                            'default_journal_id': aml.move_id.journal_id.id,
-                        },
-                        'title_hover': self._format_aml_name(aml.name, aml.ref, aml.move_id.name),
-                    }
+                    if self.env.context.get('model') == 'account.aged.receivable.date' or self.env.context.get('model') == 'account.aged.payable.date':
+                        vals = {
+                            'id': aml.id,
+                            'name': aml.move_id.name,
+                            'class': 'date',
+                            'caret_options': caret_type,
+                            'level': 4,
+                            'parent_id': 'partner_%s' % (values['partner_id'],),
+                            'columns': [{'name': v} for v in [format_date(self.env, aml.move_id.invoice_date),format_date(self.env, aml.date_maturity or aml.date), aml.move_id.invoice_payment_term_id.name, aml.journal_id.code, aml.account_id.display_name, format_date(self.env, aml.expected_pay_date)]] +
+                                       [{'name': self.format_value(sign * v, blank_if_zero=True), 'no_format': sign * v} for v in [line['period'] == 6-i and line['amount'] or 0 for i in range(7)]],
+                            'action_context': {
+                                'default_type': aml.move_id.type,
+                                'default_journal_id': aml.move_id.journal_id.id,
+                            },
+                            'title_hover': self._format_aml_name(aml.name, aml.ref, aml.move_id.name),
+                        }
+                    else:
+                        vals = {
+                            'id': aml.id,
+                            'name': aml.move_id.name,
+                            'class': 'date',
+                            'caret_options': caret_type,
+                            'level': 4,
+                            'parent_id': 'partner_%s' % (values['partner_id'],),
+                            'columns': [{'name': v} for v in [format_date(self.env, aml.date_maturity or aml.date), aml.move_id.invoice_payment_term_id.name, aml.journal_id.code, aml.account_id.display_name, format_date(self.env, aml.expected_pay_date)]] +
+                                       [{'name': self.format_value(sign * v, blank_if_zero=True), 'no_format': sign * v} for v in [line['period'] == 6-i and line['amount'] or 0 for i in range(7)]],
+                            'action_context': {
+                                'default_type': aml.move_id.type,
+                                'default_journal_id': aml.move_id.journal_id.id,
+                            },
+                            'title_hover': self._format_aml_name(aml.name, aml.ref, aml.move_id.name),
+                        }
                     lines.append(vals)
         if total and not line_id:
+            # custom code begins:- just improve 6 in 'columns' instead of 4 because we added two more column
+            if self.env.context.get('model') == 'account.aged.receivable.date' or self.env.context.get('model') == 'account.aged.payable.date':
+                total_line = {
+                    'id': 0,
+                    'name': _('Total'),
+                    'class': 'total',
+                    'level': 2,
+                    'columns': [{'name': ''}] * 6 + [{'name': self.format_value(sign * v), 'no_format': sign * v} for v in [total[6], total[4], total[3], total[2], total[1], total[0], total[5]]],
+                }
             # custom code begins:- just improve 5 in 'columns' instead of 4 because we added one more column
-            total_line = {
-                'id': 0,
-                'name': _('Total'),
-                'class': 'total',
-                'level': 2,
-                'columns': [{'name': ''}] * 5 + [{'name': self.format_value(sign * v), 'no_format': sign * v} for v in [total[6], total[4], total[3], total[2], total[1], total[0], total[5]]],
-            }
+            else:
+                total_line = {
+                    'id': 0,
+                    'name': _('Total'),
+                    'class': 'total',
+                    'level': 2,
+                    'columns': [{'name': ''}] * 5 + [{'name': self.format_value(sign * v), 'no_format': sign * v} for v in [total[6], total[4], total[3], total[2], total[1], total[0], total[5]]],
+                }
             lines.append(total_line)
         return lines
 
