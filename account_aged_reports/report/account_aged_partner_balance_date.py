@@ -44,8 +44,6 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
         total = []
         partner_clause = ''
         cr = self.env.cr
-        # custom code begins:- took one variable named 'filter_date' for filtering reports.
-        filter_date = 'am.invoice_date' if ctx.get('account_type') == 'payable' else 'l.date'
         user_company = self.env.company
         user_currency = user_company.currency_id
         company_ids = self._context.get('company_ids') or [user_company.id]
@@ -64,7 +62,6 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
             partner_ids = self.env['res.partner'].search([('category_id', 'in', ctx['partner_categories'].ids)]).ids
             arg_list += (tuple(partner_ids or [0]),)
         arg_list += (date_from, tuple(company_ids))
-        # custom code begins:- changes in the query, use 'filter_date' at last.
         query = '''
             SELECT DISTINCT l.partner_id, res_partner.name AS name, UPPER(res_partner.name) AS UPNAME, CASE WHEN prop.value_text IS NULL THEN 'normal' ELSE prop.value_text END AS trust
             FROM account_move_line AS l
@@ -83,10 +80,10 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
                         )
                     )
                     ''' + partner_clause + '''
-                AND {} <= %s
+                AND l.date <= %s
                 AND l.company_id IN %s
             ORDER BY UPPER(res_partner.name)
-            '''.format(filter_date)
+            '''
         arg_list = (self.env.company.id,) + arg_list
         cr.execute(query, arg_list)
         partners = cr.dictfetchall()
@@ -107,19 +104,19 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
         for i in range(5):
             args_list = (tuple(move_state), tuple(account_type), tuple(partner_ids),)
             # custom code begins:- changes in 'dates_query' because of the requirement which is based on 'invoice_date'
-            dates_query = 'am.invoice_date'
+            dates_query = '(COALESCE(am.invoice_date,l.date)'
 
             if periods[str(i)]['start'] and periods[str(i)]['stop']:
-                dates_query += ' BETWEEN %s AND %s'
+                dates_query += ' BETWEEN %s AND %s)'
                 args_list += (periods[str(i)]['start'], periods[str(i)]['stop'])
             elif periods[str(i)]['start']:
-                dates_query += ' >= %s'
+                dates_query += ' >= %s)'
                 args_list += (periods[str(i)]['start'],)
             else:
-                dates_query += ' <= %s'
+                dates_query += ' <= %s)'
                 args_list += (periods[str(i)]['stop'],)
             args_list += (date_from, tuple(company_ids))
-            # custom code begins:- changes in the query (change Order By as per the requirement) and use 'filter_date' at last
+            # custom code begins:- changes in the query (changes in Order By as per the requirement of 'invoice_date')
             query = '''SELECT l.id
                     FROM account_move_line AS l, account_account, account_move am
                     WHERE (l.account_id = account_account.id) AND (l.move_id = am.id)
@@ -127,9 +124,9 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
                         AND (account_account.internal_type IN %s)
                         AND ((l.partner_id IN %s) OR (l.partner_id IS NULL))
                         AND ''' + dates_query + '''
-                    AND {} <= %s
+                    AND (l.date <= %s)
                     AND l.company_id IN %s
-                    ORDER BY am.invoice_date'''.format(filter_date)
+                    ORDER BY COALESCE(am.invoice_date, l.date)'''
 
             cr.execute(query, args_list)
             partners_amount = {}
@@ -168,18 +165,17 @@ class ReportAccountAgedPartnerBalance(models.AbstractModel):
 
         # This dictionary will store the not due amount of all partners
         undue_amounts = {}
-        # custom code begin :- changed [(COALESCE(l.date_maturity,l.date)] and ORDER BY with 'am.invoice_date' as per the requirement and use 'filter_date' at last.
+        # custom code begin :- changed [(COALESCE(l.date_maturity,l.date)] and ORDER BY with [(COALESCE(am.invoice_date,l.date)] as per the requirement
         query = '''SELECT l.id
                 FROM account_move_line AS l, account_account, account_move am
                 WHERE (l.account_id = account_account.id) AND (l.move_id = am.id)
                     AND (am.state IN %s)
                     AND (account_account.internal_type IN %s)
-                    AND am.invoice_date >= %s\
+                    AND (COALESCE(am.invoice_date,l.date) >= %s)\
                     AND ((l.partner_id IN %s) OR (l.partner_id IS NULL))
-                AND {} <= %s
+                AND (l.date <= %s)
                 AND l.company_id IN %s
-                ORDER BY am.invoice_date'''.format(filter_date)
-
+                ORDER BY COALESCE(am.invoice_date, l.date)'''
         cr.execute(query, (tuple(move_state), tuple(account_type), date_from, tuple(partner_ids), date_from, tuple(company_ids)))
         aml_ids = cr.fetchall()
         aml_ids = aml_ids and [x[0] for x in aml_ids] or []
