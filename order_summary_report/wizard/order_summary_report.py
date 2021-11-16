@@ -156,7 +156,6 @@ class TrenditionOrderWarehouseReport(models.Model):
                 if expected_delivery_dates:
                     expected_delivery_date = expected_delivery_dates[0][0]
                     for i in expected_delivery_dates:
-                        #expected_delivery_date = i[0]
                         if i[0] < expected_delivery_date:
                             expected_delivery_date = i[0]
                 else:
