@@ -154,6 +154,9 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #The if statement and for loop in the next few lines pick the closest date of delivery for the items in the order summary reports and assigns that value to expected_delivery_date, passing it into the order_summary_report.xml file.
                 if expected_delivery_dates:
                     for i in expected_delivery_dates:
+                        if i[0] == None:
+                            expected_delivery_date = expected_delivery_dates
+                            break
                         expected_delivery_date = i[0]
                         if i[0] < expected_delivery_date:
                             expected_delivery_date = i[0]
