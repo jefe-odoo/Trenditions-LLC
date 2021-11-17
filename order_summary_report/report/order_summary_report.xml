@@ -42,7 +42,7 @@
                                     <th>Item Type</th>
                                     <th style="text-align:right;">On Hand Qty</th>
                                     <th style="text-align:right;">PO Qty.</th>
-
+                                    <th style="text-align:right;">Expected PO Arrival Date</th>
                                     <th style="text-align:right;">Order Qty.</th>
                                     <th style="text-align:right;">Order Amt.</th>
                                 </tr>
@@ -65,7 +65,7 @@
                                         <td><t t-esc="l['category']"/></td>
                                         <td style="text-align:right;"><t t-esc="l['current_stock']"/></td>
                                         <td style="text-align:right;"><t t-esc="l['purchase_value']"/></td>
-
+                                        <td style="text-align:right;"><t t-esc="l['expected_delivery_date']"/></td>
                                         <td style="text-align:right;"><t t-esc="l['sale_value']"/></td>
                                         <td style="text-align:right;"><t t-esc="l['sale_amount']"/></td>
                                     </tr>
