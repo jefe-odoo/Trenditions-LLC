@@ -106,3 +106,4 @@ venv.bak/
 odoo.conf
 .DS_Store
 .vscode
+/.vs
