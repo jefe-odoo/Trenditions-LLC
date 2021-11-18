@@ -143,8 +143,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "SELECT virtual_available "\
-                "FROM  product_product "\
+                "Select virtual_available "\
+                "FROM product_product "\
                 "WHERE "\
                 "default_code = '%s'" % (product.default_code))
                 qty_available = cr.fetchall()
@@ -152,7 +152,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
                 cr.execute(
-                "SELECT x_studio_expected_arrival_date "\
+                "Select x_studio_expected_arrival_date "\
                 "FROM purchase_order "\
                 "WHERE "\
                 "partner_id in (select partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s)) "\
