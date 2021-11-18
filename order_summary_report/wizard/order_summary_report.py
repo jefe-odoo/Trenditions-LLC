@@ -140,10 +140,19 @@ class TrenditionOrderWarehouseReport(models.Model):
                     current_stock += sum(l[1] for l in quant_records)                   
                 current_stock_value = current_stock * product.standard_price
 
+                #New code for changing On Hand Qty column to Qty Available column
+                cr = self.env.cr
+                cr.execute(
+                "SELECT virtual_available "\
+                "FROM  product_product "\
+                "WHERE "\
+                "default_code = %s" % (product.default_code))
+                qty_available = cr.fetchall()
+
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
                 cr.execute(
-                "Select x_studio_expected_arrival_date "\
+                "SELECT x_studio_expected_arrival_date "\
                 "FROM purchase_order "\
                 "WHERE "\
                 "partner_id in (select partner_id from purchase_order_line where product_id in (select id from product_product where default_code LIKE %s)) "\
@@ -169,10 +178,11 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'sale_value': round(sale_value, 2),
                     'sale_amount': round(sale_amount, 2),
                     'purchase_value': purchase_value,
-                    'current_stock': current_stock,
+                    #'current_stock': current_stock,
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
+                    'qty_available': qty_available,
                 }
                 lines.append(vals)
         return lines
