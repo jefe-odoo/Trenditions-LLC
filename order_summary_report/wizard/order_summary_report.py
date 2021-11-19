@@ -5,6 +5,7 @@
 
 from odoo import api, fields, models
 from datetime import date
+import sqlite3
 
 class TrenditionOrderWarehouseReport(models.Model):
     _name = "trendition.order.summary.report"
@@ -141,7 +142,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 current_stock_value = current_stock * product.standard_price
                 
                 #New code for changing On Hand Qty column to Qty Available column
-                cr = self.env.cr
+                cr = sqlite3.connect("C:\OneDrive - Trenditions, LLC\Trenditions Shared Folder\C - Last_Live_Data_Refreshed")
+                cr = con.cursor()
                 cr.execute(
                 "Select reserved_availability "\
                 "FROM stock_move "\
