@@ -9,7 +9,6 @@ from datetime import date
 class TrenditionOrderWarehouseReport(models.Model):
     _name = "trendition.order.summary.report"
     _description = "Order Summary Report"
-    _inherit = "product.product"
 
     @api.model
     def _default_warehouse_id(self):
@@ -156,7 +155,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 
                 cr = self.env.cr
                 cr.execute('''
-                Select virtual_available
+                Select qty_available
                 FROM product_product 
                 WHERE 
                 default_code = '%s' ''' % (product.default_code))

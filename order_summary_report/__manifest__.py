@@ -18,7 +18,7 @@
     'category': 'Stock',
     'version': '1.0.1',
     'support': 'sales@ksolves.com',
-    'depends': ['base', 'stock', 'purchase', 'sale', 'product'],
+    'depends': ['base', 'stock', 'purchase', 'sale'],
     'data': [
         'security/ir.model.access.csv',
         'report/order_summary_report.xml',
