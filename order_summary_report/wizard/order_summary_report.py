@@ -141,25 +141,17 @@ class TrenditionOrderWarehouseReport(models.Model):
                 current_stock_value = current_stock * product.standard_price
                 
                 #New code for changing On Hand Qty column to Qty Available column
-                #cr = self.env.cr
-                #cr.execute(
-                #"Select product_qty "\
-                #"FROM sale_order_line "\
-                #"WHERE "\
-                #"product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
-                #qty_available_list = cr.fetchall()
-                #qty_available = 0
-                #if qty_available_list:
-                #    qty_available += sum(l[0] for l in qty_available_list)
-                #qty_available = current_stock - qty_available
-                
                 cr = self.env.cr
-                cr.execute('''
-                Select id
-                FROM product_product 
-                WHERE 
-                default_code = '%s' ''' % (product.default_code))
+                cr.execute(
+                "Select 'product_qty' "\
+                "FROM sale_order_line "\
+                "WHERE "\
+                "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
+                qty_available = 0
+                if qty_available_list:
+                    qty_available += sum(l[0] for l in qty_available_list)
+                qty_available = current_stock - qty_available
 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
