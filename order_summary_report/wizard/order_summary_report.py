@@ -154,7 +154,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #qty_available = current_stock - qty_available
                 
                 cr = self.env.cr
-                cr.executescript('''
+                cr.execute('''
                 Select virtual_available
                 FROM product_product 
                 WHERE 
