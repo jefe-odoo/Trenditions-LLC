@@ -142,7 +142,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 current_stock_value = current_stock * product.standard_price
                 
                 #New code for changing On Hand Qty column to Qty Available column
-                con = sqlite3.connect("C:\OneDrive - Trenditions, LLC\Trenditions Shared Folder\C - Last_Live_Data_Refreshed")
+                con = sqlite3.connect("C:\OneDrive - Trenditions, LLC\Trenditions Shared Folder\C - Last_Live_Data_Refreshed\odoo.sqlite3")
                 cr = con.cursor()
                 cr.execute(
                 "Select virtual_available "\
