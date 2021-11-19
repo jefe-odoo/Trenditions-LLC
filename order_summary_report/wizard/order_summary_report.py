@@ -154,11 +154,11 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #qty_available = current_stock - qty_available
                 
                 cr = self.env.cr
-                cr.execute(
-                "Select virtual_available "\
-                "FROM product_product "\
-                "WHERE "\
-                "default_code = '%s'" % (product.default_code))
+                cr.executescript('''
+                Select virtual_available
+                FROM product_product 
+                WHERE 
+                default_code = '%s' ''' % (product.default_code))
                 qty_available_list = cr.fetchall()
 
                 #New code for new column Expected PO Delivery Date
