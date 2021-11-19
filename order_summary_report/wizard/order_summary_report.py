@@ -155,7 +155,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 
                 cr = self.env.cr
                 cr.execute('''
-                Select qty_available
+                Select id
                 FROM product_product 
                 WHERE 
                 default_code = '%s' ''' % (product.default_code))
