@@ -157,7 +157,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select virtual_available "\
                 "FROM product_product "\
                 "WHERE "\
-                "default_code = '%s'", (product.default_code,))
+                "default_code = %s", (product.default_code,))
                 qty_available = cr.fetchall()
 
                 #New code for new column Expected PO Delivery Date
