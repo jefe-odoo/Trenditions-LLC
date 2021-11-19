@@ -143,7 +143,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 current_stock_value = current_stock * product.standard_price
                 
                 #New code for changing On Hand Qty column to Qty Available column
-                BASE_DIR = os.path.dirname(os.path.abspath(odoo.sqlite3))
+                BASE_DIR = os.path.dirname(os.path.abspath("odoo.sqlite3"))
                 db_path = os.path.join(BASE_DIR, "odoo.sqlite3")
                 #con = sqlite3.connect("C:\OneDrive - Trenditions, LLC\Trenditions Shared Folder\C - Last_Live_Data_Refreshed\odoo.sqlite3")
                 con = sqlite3.connect(db_path)
