@@ -145,8 +145,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = sqlite3.connect("C:\OneDrive - Trenditions, LLC\Trenditions Shared Folder\C - Last_Live_Data_Refreshed")
                 cr = con.cursor()
                 cr.execute(
-                "Select reserved_availability "\
-                "FROM stock_move "\
+                "Select virtual_available "\
+                "FROM product_product "\
                 "WHERE "\
                 "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
