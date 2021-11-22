@@ -146,7 +146,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = self.env.cr
                 cr.execute(
                 "Select product_qty "\
-                "FROM  stock_move_line"\
+                "FROM  stock_move_line "\
                 "WHERE "\
                 "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
