@@ -146,9 +146,10 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = self.env.cr
                 cr.execute(
                 "Select product_uom_qty "\
-                "FROM sale_report "\
+                "FROM sale_order_line "\
                 "WHERE "\
-                "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
+                "order_id in (select id from sale_order where state = 'sale') "\
+                "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
