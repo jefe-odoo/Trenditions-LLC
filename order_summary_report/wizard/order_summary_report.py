@@ -146,7 +146,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = self.env.cr
                 cr.execute(
                 "Select virtual_available "\
-                "FROM product_template"\
+                "FROM product_template "\
                 "WHERE "\
                 "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
