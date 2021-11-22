@@ -52,7 +52,7 @@ class TrenditionOrderWarehouseReport(models.Model):
         #     product = self.env['product.product'].search([])
         cr = self.env.cr
         cr.execute(
-        "Select id "\
+        "Select id, virtual_available "\
         "FROM product_product ")
         product_data = cr.fetchall()
 
