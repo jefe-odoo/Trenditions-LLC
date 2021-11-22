@@ -131,7 +131,7 @@ class TrenditionOrderWarehouseReport(models.Model):
 
                 cr = self.env.cr
                 cr.execute(
-                "Select id , inventory_quantity "\
+                "Select id , quantity "\
                 "FROM stock_quant "\
                 "WHERE "\
                 "company_id = %s and "\
