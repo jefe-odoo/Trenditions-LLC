@@ -52,7 +52,7 @@ class TrenditionOrderWarehouseReport(models.Model):
         #     product = self.env['product.product'].search([])
         cr = self.env.cr
         cr.execute(
-        "Select id, virtual_available "\
+        "Select id "\
         "FROM product_product ")
         product_data = cr.fetchall()
 
@@ -145,8 +145,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "Select product_uom_qty "\
-                "FROM sale_order_line "\
+                "Select product_qty "\
+                "FROM stock_move_line "\
                 "WHERE "\
                 "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
