@@ -143,16 +143,12 @@ class TrenditionOrderWarehouseReport(models.Model):
                 current_stock_value = current_stock * product.standard_price
                 
                 #New code for changing On Hand Qty column to Qty Available column
-                BASE_DIR = os.path.dirname(os.path.abspath("odoo.sqlite3"))
-                db_path = os.path.join(BASE_DIR, "odoo.sqlite3")
-                #con = sqlite3.connect("C:\OneDrive - Trenditions, LLC\Trenditions Shared Folder\C - Last_Live_Data_Refreshed\odoo.sqlite3")
-                con = sqlite3.connect(db_path)
-                cr = con.cursor()
+                cr = self.env.cr
                 cr.execute(
-                "Select virtual_available "\
-                "FROM product_product "\
+                "Select product_uom_qty"\
+                "FROM sale.order.line "\
                 "WHERE "\
-                "default_code = '%s'" % (product.default_code))
+                "product_id in (select id from product.product where default_code = '%s'" % (product.default_code))
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
@@ -192,7 +188,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': qty_available,
+                    'qty_available': current_stock,
                 }
                 lines.append(vals)
         return lines
