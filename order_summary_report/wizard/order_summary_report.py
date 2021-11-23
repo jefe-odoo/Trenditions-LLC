@@ -145,10 +145,10 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "Select virtual_available "\
-                "FROM product_template "\
+                "Select availability "\
+                "FROM stock_move "\
                 "WHERE "\
-                "default_code = %(product)s", {'product': product.default_code,})
+                "product_id in(select id from product_product where default_code = %(product)s)", {'product': product.default_code,})
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 #if qty_available_list:
