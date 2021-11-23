@@ -148,7 +148,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select virtual_available "\
                 "FROM product_product "\
                 "WHERE "\
-                "default_code LIKE %(product)s", {'product': product.default_code})
+                "default_code = %(product)s", {'product': product.default_code,})
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 #if qty_available_list:
