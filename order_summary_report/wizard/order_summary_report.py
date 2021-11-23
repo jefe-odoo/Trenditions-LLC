@@ -146,7 +146,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select virtual_available "\
                 "FROM product_product "\
                 "WHERE "\
-                "product_id in(select id from product_product where default_code = %(product)s)", {'product': product.default_code,})
+                "default_code = %(product)s", {'product': product.default_code,})
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 #if qty_available_list:
