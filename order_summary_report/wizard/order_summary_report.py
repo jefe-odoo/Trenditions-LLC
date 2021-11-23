@@ -145,7 +145,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = self.env.cr
                 cr.execute(
                 "ALTER TABLE Product "\
-                "ADD virtual_available FLOAT(255, 1)")
+                "ADD virtual_available FLOAT")
 
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
