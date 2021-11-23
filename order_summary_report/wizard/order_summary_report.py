@@ -189,7 +189,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': qty_available,
+                    'qty_available': qty_available_list,
                 }
                 lines.append(vals)
         return lines
