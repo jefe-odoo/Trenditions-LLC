@@ -142,14 +142,18 @@ class TrenditionOrderWarehouseReport(models.Model):
                     current_stock += sum(l[1] for l in quant_records)                   
                 current_stock_value = current_stock * product.standard_price
                 
+                cr = self.env.cr
+                cr.execute(
+                "ALTER TABLE Product "\
+                "ADD virtual_available FLOAT(255, 1)")
+
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "Select virtual_available_at_date "\
-                "FROM sale_order_line "\
+                "Select virtual_available "\
+                "FROM product_product "\
                 "WHERE "\
-                "order_id in (select id from sale_order where state = 'sale') "\
-                "and product_id in (select id from product_product where default_code = %(product)s)", {'product': product.default_code})
+                "default_code = %(product)s", {'product': product.default_code})
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
