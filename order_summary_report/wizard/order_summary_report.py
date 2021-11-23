@@ -141,11 +141,6 @@ class TrenditionOrderWarehouseReport(models.Model):
                 if quant_records:
                     current_stock += sum(l[1] for l in quant_records)                   
                 current_stock_value = current_stock * product.standard_price
-                
-                cr = self.env.cr
-                cr.execute(
-                "ALTER TABLE product_product "\
-                "ADD virtual_available FLOAT")
 
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
