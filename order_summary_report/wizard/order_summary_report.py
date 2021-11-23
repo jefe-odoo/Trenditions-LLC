@@ -151,8 +151,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "default_code = %(product)s", {'product': product.default_code})
                 qty_available_list = cr.fetchall()
                 qty_available = 0
-                #if qty_available_list:
-                    #qty_available += sum(l[0] for l in qty_available_list)
+                if qty_available_list:
+                    qty_available += sum(l[0] for l in qty_available_list)
                 #qty_available = current_stock - qty_available
 
                 #New code for new column Expected PO Delivery Date
