@@ -149,7 +149,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "FROM sale_order_line "\
                 "WHERE "\
                 "order_id in (select id from sale_order where state = 'sale') "\
-                "and product_id in (select id from product_product where default_code = '%(product)s')", {'product': product.default_code})
+                "and product_id in (select id from product_product where default_code = %(product)s)", {'product': product.default_code})
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
