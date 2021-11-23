@@ -5,8 +5,6 @@
 
 from odoo import api, fields, models
 from datetime import date
-import sqlite3
-import os.path
 
 class TrenditionOrderWarehouseReport(models.Model):
     _name = "trendition.order.summary.report"
@@ -145,8 +143,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "Select availability "\
-                "FROM stock_move "\
+                "Select virtual_available "\
+                "FROM product_product "\
                 "WHERE "\
                 "product_id in(select id from product_product where default_code = %(product)s)", {'product': product.default_code,})
                 qty_available_list = cr.fetchall()
