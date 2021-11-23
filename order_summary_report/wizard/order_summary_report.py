@@ -9,6 +9,7 @@ from datetime import date
 class TrenditionOrderWarehouseReport(models.Model):
     _name = "trendition.order.summary.report"
     _description = "Order Summary Report"
+    _inherit = 'product.product'
 
     @api.model
     def _default_warehouse_id(self):
