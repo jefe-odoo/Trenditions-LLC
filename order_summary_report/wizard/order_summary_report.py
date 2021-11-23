@@ -129,7 +129,7 @@ class TrenditionOrderWarehouseReport(models.Model):
 
                 cr = self.env.cr
                 cr.execute(
-                "Select id , quantity "\
+                "Select id , reserved_quantity "\
                 "FROM stock_quant "\
                 "WHERE "\
                 "company_id = %s and "\
@@ -143,7 +143,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "Select reserved_availability "\
+                "Select weight "\
                 "FROM stock_move "\
                 "WHERE "\
                 "product_id in (select id from product_product where default_code = %(product)s)", {'product': product.default_code,})
@@ -189,7 +189,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': qty_available,
+                    'qty_available': current_stock,
                 }
                 lines.append(vals)
         return lines
