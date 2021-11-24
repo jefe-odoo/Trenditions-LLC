@@ -147,7 +147,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "FROM sale_order_line "\
                 "WHERE "\
                 "order_id in (select id from sale_order where state = 'sale' and partner_id in %s and client_order_ref ILIKE %s and create_date >= %s and create_date <= %s) and "\
-                "product_id in (select id from product_product where default_code = '%s')", (tuple(partner_list), self.customer_reference +'%', self.date_from, self.date_to, product.default_code,))
+                "product_id in (select id from product_product where default_code = %s)", (tuple(partner_list), self.customer_reference +'%', self.date_from, self.date_to, product.default_code,))
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
