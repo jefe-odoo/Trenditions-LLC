@@ -146,7 +146,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select product_uom_qty "\
                 "FROM sale_order_line "\
                 "WHERE "\
-                "order_id in (select id from sale_order where client_order_ref ILIKE %s) and "\
+                "order_id in (select id from sale_order where client_order_ref ILIKE %s and state == 'sale') and "\
                 "product_id in (select id from product_product where default_code = %s)", (self.customer_reference +'%', product.default_code))
                 qty_available_list = cr.fetchall()
                 qty_available = 0
