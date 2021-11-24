@@ -155,7 +155,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #   qty_available = current_stock - qty_available
 
 
-                ###"default_code = %(product)s", {'product': product.default_code,})
+                ##"default_code = %(product)s", {'product': product.default_code,})
 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
