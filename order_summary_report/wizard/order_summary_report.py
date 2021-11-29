@@ -144,10 +144,9 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = self.env.cr
                 cr.execute(
                 "Select product_uom_qty "\
-                "FROM sale_order_line "\
+                "FROM stock_move "\
                 "WHERE "\
-                "order_id in (select id from sale_order where partner_id in %s and state = 'sale') and "\
-                "product_id in (select id from product_product where default_code = %s)", (tuple(partner_list), product.default_code))
+                "product_id in (select id from product_product where default_code = %s)", (product.default_code))
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
@@ -190,7 +189,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': current_stock,
+                    'qty_available': qty_available,
                 }
                 lines.append(vals)
         return lines
