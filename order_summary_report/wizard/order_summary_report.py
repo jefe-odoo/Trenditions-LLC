@@ -143,7 +143,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #New code for changing On Hand Qty column to Qty Available column
                 cr = self.env.cr
                 cr.execute(
-                "Select reserved_availability "\
+                "Select quantity_done "\
                 "FROM stock_move "\
                 "WHERE "\
                 "(state = 'confirmed' or state = 'assigned') and "\
