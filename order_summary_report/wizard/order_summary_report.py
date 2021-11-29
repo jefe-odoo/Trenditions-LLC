@@ -146,7 +146,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select product_uom_qty "\
                 "FROM stock_move "\
                 "WHERE "\
-                "product_id in (select id from product_product where default_code = %s)" % (product.default_code))
+                "(state = 'confirmed' or state = 'assigned') and "\
+                "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 qty_available_list = cr.fetchall()
                 qty_available = 0
                 if qty_available_list:
