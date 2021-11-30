@@ -142,7 +142,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     current_stock += sum(l[1] for l in quant_records)
                     qty_available += sum(l[2] for l in quant_records)  
                 #Below statement now subtracts reserved quantity from quantity on hand 
-                qty_available = current_stock - qty_avaialable
+                qty_available = current_stock - qty_available
 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
