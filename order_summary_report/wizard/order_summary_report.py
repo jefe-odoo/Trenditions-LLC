@@ -127,9 +127,10 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #     current_stock += sum(l.quantity for l in quant_ids)                   
                 # current_stock_value = current_stock * product.standard_price
 
+                #Added reserved_quantity pull to below sql statement to get a more accurate qty_available field
                 cr = self.env.cr
                 cr.execute(
-                "Select id, reserved_quantity "\
+                "Select id, quantity, reserved_quantity "\
                 "FROM stock_quant "\
                 "WHERE "\
                 "company_id = %s and "\
@@ -137,25 +138,10 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "and location_id in (select id from stock_location where usage = 'internal')", (self.company_id.id,product.id))
                 quant_records = cr.fetchall()
                 if quant_records:
-                    current_stock += sum(l[1] for l in quant_records)                   
-                current_stock_value = current_stock * product.standard_price
-
-                #New code for changing On Hand Qty column to Qty Available column
-                cr = self.env.cr
-                cr.execute(
-                "Select qty_delivered "\
-                "FROM sale_order_line "\
-                "WHERE "\
-                "order_id in (select id from sale_order where state = 'sale') and "\
-                "product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
-                qty_available_list = cr.fetchall()
-                qty_available = 0
-                if qty_available_list:
-                    qty_available += sum(l[0] for l in qty_available_list)
-                #   qty_available = current_stock - qty_available
-
-
-                #"default_code = %(product)s", {'product': product.default_code,})
+                    current_stock += sum(l[1] for l in quant_records)
+                    qty_available += sum(l[2] for l in quant_records)  
+                #Below statement now subtracts reserved quantity from quantity on hand 
+                qty_available = current_stock - qty_avaialable
 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
@@ -190,7 +176,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': current_stock,
+                    'qty_available': qty_available,
                 }
                 lines.append(vals)
         return lines
