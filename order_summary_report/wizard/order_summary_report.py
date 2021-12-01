@@ -144,7 +144,7 @@ class TrenditionOrderWarehouseReport(models.Model):
 
                 cr = self.env.cr
                 cr.execute(
-                "Select reference "\
+                "Select name "\
                 "FROM stock_move ")
                 #"WHERE "\
                 #"name LIKE 'WH/OUT%%%' "\
