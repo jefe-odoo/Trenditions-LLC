@@ -144,15 +144,15 @@ class TrenditionOrderWarehouseReport(models.Model):
 
                 cr = self.env.cr
                 cr.execute(
-                "Select product_uom_qty "\
+                "Select name "\
                 "FROM stock_move "\
                 "WHERE "\
-                "name LIKE 'WH/OUT%%%' "
-                "and (state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
+                #"name LIKE 'WH/OUT%%%' "
+                "(state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
                 "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 product_uom = cr.fetchall()
-                for i in product_uom:
-                    product_uom_out = product_uom_out + i[0]
+                #for i in product_uom:
+                #    product_uom_out = product_uom_out + i[0]
 
                 cr = self.env.cr
                 cr.execute(
@@ -200,7 +200,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': product_uom_out,
+                    'qty_available': product_uom,
                 }
                 lines.append(vals)
         return lines
