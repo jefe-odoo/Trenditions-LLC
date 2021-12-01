@@ -151,7 +151,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "FROM stock_picking "\
                 "WHERE "\
                 "(state = 'confirmed' or state = 'assigned') "\
-                "and product_id in (select id from product_product where default_code = %s)" % (product.default_code))
+                "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 product_uom = cr.fetchall()
                 for i in product_uom:
                     product_uom_qty = product_uom_qty + i[0]
