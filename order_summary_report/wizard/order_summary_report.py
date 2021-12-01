@@ -159,7 +159,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select product_uom_qty "\
                 "FROM stock_move "\
                 "WHERE "\
-                "name LIKE 'WH/IN%%' "
+                "name LIKE '%%WH/IN%%' "
                 "and (state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
                 "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 product_uom = cr.fetchall()
