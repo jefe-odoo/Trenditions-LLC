@@ -144,12 +144,12 @@ class TrenditionOrderWarehouseReport(models.Model):
 
                 cr = self.env.cr
                 cr.execute(
-                "Select origin "\
-                "FROM stock_move ")
-                #"WHERE "\
+                "Select name "\
+                "FROM stock_move "\
+                "WHERE "\
                 #"name LIKE 'WH/OUT%%%' "\
-                #"(state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
-                #"and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
+                "(state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
+                "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 product_uom = cr.fetchall()
                 #for i in product_uom:
                 #    product_uom_out = product_uom_out + i[0]
