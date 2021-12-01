@@ -66,6 +66,7 @@ class TrenditionOrderWarehouseReport(models.Model):
             sale_value = sale_amount = 0
             purchase_value = 0
             qty_available = 0
+            product_uom_qty = 0
             product = self.env['product.product'].browse(obj[0])
             if self.customer_ids and self.customer_reference:
                 # sale_obj = self.env['sale.order.line'].search([('order_id.state', '!=', 'cancel'),
@@ -144,6 +145,17 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #Below statement now subtracts reserved quantity from quantity on hand 
                 qty_available = current_stock - qty_available
 
+                cr = self.env.cr
+                cr.execute(
+                "Select product_uom_qty "\
+                "FROM stock_picking "\
+                "WHERE "\
+                "(state = 'confirmed' or state = 'assigned') "\
+                "and product_id in (select id from product_product where default_code = %s)" % (product.default_code))
+                product_uom = cr.fetchall()
+                for i in product_uom:
+                    product_uom_qty = product_uom_qty + i[0]
+
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
                 cr.execute(
@@ -177,7 +189,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': qty_available,
+                    'qty_available': product_uom_qty,
                 }
                 lines.append(vals)
         return lines
