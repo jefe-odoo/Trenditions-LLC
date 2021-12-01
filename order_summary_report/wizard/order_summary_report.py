@@ -66,7 +66,7 @@ class TrenditionOrderWarehouseReport(models.Model):
             sale_value = sale_amount = 0
             purchase_value = 0
             qty_available = 0
-            product_uom_qty = 0
+            product_uom_qty = product_uom_out = product_uom_in = 0
             product = self.env['product.product'].browse(obj[0])
             if self.customer_ids and self.customer_reference:
                 # sale_obj = self.env['sale.order.line'].search([('order_id.state', '!=', 'cancel'),
@@ -147,12 +147,25 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "Select product_uom_qty "\
                 "FROM stock_move "\
                 "WHERE "\
-                "(state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
+                "name LIKE 'WH/OUT%' "
+                "and (state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
                 "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
                 product_uom = cr.fetchall()
                 for i in product_uom:
-                    product_uom_qty = product_uom_qty + i[0]
-                qty_available = current_stock - product_uom_qty
+                    product_uom_out = product_uom_out + i[0]
+
+                cr = self.env.cr
+                cr.execute(
+                "Select product_uom_qty "\
+                "FROM stock_move "\
+                "WHERE "\
+                "name LIKE 'WH/IN%' "
+                "and (state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
+                "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
+                product_uom = cr.fetchall()
+                for i in product_uom:
+                    product_uom_in = product_uom_in + i[0]
+                qty_available = current_stock - product_uom_out + product_uom_in
 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
