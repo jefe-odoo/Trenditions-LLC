@@ -148,7 +148,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 cr = self.env.cr
                 cr.execute(
                 "Select product_uom_qty "\
-                "FROM stock_picking "\
+                "FROM stock_move "\
                 "WHERE "\
                 "(state = 'confirmed' or state = 'assigned') "\
                 "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
