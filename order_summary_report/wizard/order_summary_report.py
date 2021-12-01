@@ -132,7 +132,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #Added reserved_quantity pull to below sql statement to get a more accurate qty_available field
                 cr = self.env.cr
                 cr.execute(
-                "Select id, quantity, reserved_quantity "\
+                "Select id, quantity "\
                 "FROM stock_quant "\
                 "WHERE "\
                 "company_id = %s and "\
@@ -141,9 +141,6 @@ class TrenditionOrderWarehouseReport(models.Model):
                 quant_records = cr.fetchall()
                 if quant_records:
                     current_stock += sum(l[1] for l in quant_records)
-                    qty_available += sum(l[2] for l in quant_records)  
-                #Below statement now subtracts reserved quantity from quantity on hand 
-                qty_available = current_stock - qty_available
 
                 cr = self.env.cr
                 cr.execute(
@@ -155,6 +152,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 product_uom = cr.fetchall()
                 for i in product_uom:
                     product_uom_qty = product_uom_qty + i[0]
+                qty_available = current_stock - product_uom_qty
 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
@@ -189,7 +187,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,
-                    'qty_available': product_uom_qty,
+                    'qty_available': qty_available,
                 }
                 lines.append(vals)
         return lines
