@@ -127,9 +127,10 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #     current_stock += sum(l.quantity for l in quant_ids)                   
                 # current_stock_value = current_stock * product.standard_price
 
+                #SQL statement to get the current quantity on hand. This value is used to caluculate the quantity available and reported in the order summary report
                 cr = self.env.cr
                 cr.execute(
-                "Select id , quantity "\
+                "Select id, quantity "\
                 "FROM stock_quant "\
                 "WHERE "\
                 "company_id = %s and "\
@@ -137,8 +138,35 @@ class TrenditionOrderWarehouseReport(models.Model):
                 "and location_id in (select id from stock_location where usage = 'internal')", (self.company_id.id,product.id))
                 quant_records = cr.fetchall()
                 if quant_records:
-                    current_stock += sum(l[1] for l in quant_records)                   
-                current_stock_value = current_stock * product.standard_price
+                    current_stock += sum(l[1] for l in quant_records)
+
+                #SQL statement to pull outgoing product
+                cr = self.env.cr
+                cr.execute(
+                "Select product_uom_qty "\
+                "FROM stock_move "\
+                "WHERE "\
+                "reference LIKE '%%WH/OUT%%' "\
+                "and (state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
+                "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
+                product_uom = cr.fetchall()
+                for i in product_uom:
+                    product_uom_out = product_uom_out + i[0]
+                
+                #SQL statement to pull incoming product 
+                cr = self.env.cr
+                cr.execute(
+                "Select product_uom_qty "\
+                "FROM stock_move "\
+                "WHERE "\
+                "reference LIKE '%%WH/IN%%' "\
+                "and (state = 'confirmed' or state = 'partially_available' or state = 'assigned') "\
+                "and product_id in (select id from product_product where default_code = '%s')" % (product.default_code))
+                product_uom = cr.fetchall()
+                for i in product_uom:
+                    product_uom_in = product_uom_in + i[0]
+                #Subtracting outgoing product and adding incoming product from quantity on hand to get a more accurate picture of the quantity available to be sold 
+                qty_available = current_stock - product_uom_out + product_uom_in
                 
                 #New code for new column Expected PO Delivery Date
                 cr = self.env.cr
@@ -169,7 +197,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                     'sale_value': round(sale_value, 2),
                     'sale_amount': round(sale_amount, 2),
                     'purchase_value': purchase_value,
-                    'current_stock': current_stock,
+                    'current_stock': qty_available,
                     'current_stock_value': current_stock_value,
                     'x_studio_bin_location_v': product.x_studio_bin_location_v,
                     'expected_delivery_date': expected_delivery_date,

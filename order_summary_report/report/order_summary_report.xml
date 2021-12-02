@@ -39,8 +39,8 @@
                                     <th>Item Id</th>
                                     <th>Location</th>
                                     <th >Item Description</th>
-                                    <th>Item Type</th>
-                                    <th style="text-align:right;">On Hand Qty</th>
+                                    <th>Product Category</th>
+                                    <th style="text-align:right;">Qty Available</th>
                                     <th style="text-align:right;">PO Qty.</th>
                                     <th style="text-align:right;">Expected PO Arrival Date</th>
                                     <th style="text-align:right;">Order Qty.</th>
