@@ -65,6 +65,8 @@ class TrenditionOrderWarehouseReport(models.Model):
             current_stock = current_stock_value = 0
             sale_value = sale_amount = 0
             purchase_value = 0
+            qty_available = 0
+            product_uom_qty = product_uom_out = product_uom_in = 0
             product = self.env['product.product'].browse(obj[0])
             if self.customer_ids and self.customer_reference:
                 # sale_obj = self.env['sale.order.line'].search([('order_id.state', '!=', 'cancel'),
