@@ -129,7 +129,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 #     current_stock += sum(l.quantity for l in quant_ids)                   
                 # current_stock_value = current_stock * product.standard_price
 
-                #Added reserved_quantity pull to below sql statement to get a more accurate qty_available field
+                #SQL statement to get the current quantity on hand. This value is used to caluculate the quantity available and reported in the order summary report
                 cr = self.env.cr
                 cr.execute(
                 "Select id, quantity "\
@@ -142,6 +142,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 if quant_records:
                     current_stock += sum(l[1] for l in quant_records)
 
+                #SQL statement to pull outgoing product
                 cr = self.env.cr
                 cr.execute(
                 "Select product_uom_qty "\
@@ -153,7 +154,8 @@ class TrenditionOrderWarehouseReport(models.Model):
                 product_uom = cr.fetchall()
                 for i in product_uom:
                     product_uom_out = product_uom_out + i[0]
-
+                
+                #SQL statement to pull incoming product 
                 cr = self.env.cr
                 cr.execute(
                 "Select product_uom_qty "\
@@ -165,6 +167,7 @@ class TrenditionOrderWarehouseReport(models.Model):
                 product_uom = cr.fetchall()
                 for i in product_uom:
                     product_uom_in = product_uom_in + i[0]
+                #Subtracting outgoing product and adding incoming product from quantity on hand to get a more accurate picture of the quantity available to be sold 
                 qty_available = current_stock - product_uom_out + product_uom_in
 
                 #New code for new column Expected PO Delivery Date
